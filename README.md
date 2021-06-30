@@ -30,20 +30,18 @@ The standard legal format for names is: `patronym matronym firstname middlename`
 
 # Example
 Let's consider how the Simpsons family would look in this data.  The family tree is:
-(../references/simpsons_family.png)
+(./references/simpsons_family.png)
 
-Homer's parents are Abraham Simpson & Mona Olsen, so Homer's apellidos would be "Simpson Olsen", and his full name would be "Homer Jay Simpson Olsen"
+Homer's parents are Abraham Simpson & Mona Olsen, so Homer's apellidos would be "Simpson Olsen", and his full name would be `Homer Jay Simpson Olsen`
 
-Marge's parents are Clancy Bouvier & Jacqueline Gurney.  In Spanish-style naming, Marge would retain her maiden name (Bouvier), and pass it on to her children.  Socially, she might be known as "Marge de Simpson", but on legal documents she would be "Marjorie Jacqueline Bouvier Gurney".
+Marge's parents are Clancy Bouvier & Jacqueline Gurney.  In Spanish-style naming, Marge would retain her maiden name (Bouvier), and pass it on to her children.  Socially, she might be known as "Marge de Simpson", but on legal documents she would be `Marjorie Jacqueline Bouvier Gurney`.
 
-```
-nombre	dt_birth	nombre_padre	nombre_madre	marital_status	dt_marriage	nombre_spouse
-Homer Jay Simpson Olsen				1956/05/12	"Abe Simpson"	"Mona Olsen"	CASADO	1981/09/29	"Marge Bouvier"	
-Marjorie Jacqueline Bouvier Gurney	????/10/01
-Bart Jojo Simpson Bouvier			1981/04/01
-Lisa Marie Simpson Bouvier			1983/05/09
+|nombre	|	dt_birth	|	nombre_padre	|	nombre_madre	|	marital_status	|	dt_marriage	|	nombre_spouse
+Simpson Olsen Homer Jay	|	1956/05/12	| Abe Simpson	|	Mona Olsen	|	CASADO	|	1981/09/29	|	Marge Bouvier
+Bouvier Gurney Marjorie Jacqueline	|	1956/10/01	|	Clancy Bouvier	|	Jacqueline Gurney	|	CASADO	|	1981/09/29	|	Simpson Homer
+Bart Jojo Simpson Bouvier	|	1981/04/01
+Lisa Marie Simpson Bouvier	| 1983/05/09
 Margaret Evelyn Simpson Bouvier
-```
 
 
 Chart taken from
