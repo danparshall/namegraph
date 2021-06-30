@@ -36,7 +36,8 @@ Homer's parents are Abraham Simpson & Mona Olsen, so Homer's apellidos would be 
 
 Marge's parents are Clancy Bouvier & Jacqueline Gurney.  In Spanish-style naming, Marge would retain her maiden name (Bouvier), and pass it on to her children.  Socially, she might be known as "Marge de Simpson", but on legal documents she would be `Marjorie Jacqueline Bouvier Gurney`.
 
-|nombre	|	dt_birth	|	nombre_padre	|	nombre_madre	|	marital_status	|	dt_marriage	|	nombre_spouse
+|nombre	|	dt_birth	|	nombre_padre	|	nombre_madre	|	marital_status	|	dt_marriage	|	nombre_spouse |
+| ---	| ---	|	---						| ---				|	---				|	---			|	---	|
 Simpson Olsen Homer Jay	|	1956/05/12	| Abe Simpson	|	Mona Olsen	|	CASADO	|	1981/09/29	|	Marge Bouvier
 Bouvier Gurney Marjorie Jacqueline	|	1956/10/01	|	Clancy Bouvier	|	Jacqueline Gurney	|	CASADO	|	1981/09/29	|	Simpson Homer
 Bart Jojo Simpson Bouvier	|	1981/04/01
