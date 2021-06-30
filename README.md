@@ -29,8 +29,7 @@ The standard legal format for names is: `patronym matronym firstname middlename`
 
 
 # Example
-Let's consider how the Simpsons family would look in this data.  The family tree is:
-(./references/simpsons_family.png)
+Let's consider how the Simpsons family would look in this data.  The family tree is [here](./references/simpsons_family.png)
 
 Homer's parents are Abraham Simpson & Mona Olsen, so Homer's apellidos would be "Simpson Olsen", and his full name would be `Homer Jay Simpson Olsen`
 
@@ -45,13 +44,7 @@ Simpson Bouvier Lisa Marie| 1983/05/09	|	Homer Simpson	| Marge Bouvier	|	SOLTERO
 Simpson Bouvier Margaret Evelyn	|	1989/01/01	| Simpson Homer Jay	|	Bouvier Marjorie	| SOLTERO
 
 
-Chart taken from
-
-https://web.archive.org/web/20210627221809/https://www.pngkey.com/maxpic/u2q8e6u2q8r5u2r5/
-https://simpsons.fandom.com/wiki/Simpson_family?file=Simpsons_possible_family_tree.jpg
-
-https://web.archive.org/web/20210628002600/https://simpsons.fandom.com/wiki/Simpson_family?file=Simpsons_possible_family_tree.jpg
-
+Chart taken from https://simpsons.fandom.com/wiki/Simpson_family?file=Simpsons_possible_family_tree.jpg
 
 
 
