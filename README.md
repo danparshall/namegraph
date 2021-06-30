@@ -6,24 +6,17 @@ Building a directed graph of family relationships from name data
 The dataset consists of public records from a country in Latin America, scraped off a government website.  Technically this isn't PII in the country of origin, but this repo will still treat it as such.  In Latin America, one's legal/formal last name (or apellido) consists of two parts: the father's last name (which is passed on to children) and the mother's last name (which is not); unlike in the USA, women don't change their legal name upon marriage.  This pattern gives us a chance to link together the records and establish a graph of family relationships.  In addition to the citizen's full legal name, we also typically have entries for the parents (although these are often in "social" format, rather than the "legal" format).  The goal of this repo is to parse the records, for each citizen identifying the apellidos, and linking each record to the parents.
 
 For each citizen, we have the following information:
-```
-cedula	-	Basically a citizen ID number.  Hashed for privacy.
-nombre	-	Citizen's name, almost always in the standard legal format
-dt_birth	-
-dt_death	- if applicable
-marital_status	- Either SOLTERO, CASADO, DIVORCIADO, VIUDO (Single, Married, Divorced, Widowed)
-dt_marriage
-nombre_spouse
-ced_spouse
-nombre_padre
-ced_padre
-nombre_madre
-ced_madre	
-is_nat
-is_nat_padre
-is_nat_madre
-
-```
+| field	|	comment	|
+| ---	|	---		|
+`cedula`		|	Basically a citizen ID number.  Hashed for privacy.
+`nombre`		|	Citizen's name, almost always in the standard legal format
+`dt_birth`	|	
+`nombre_padre`	|	
+`nombre_madre`	|	
+`dt_death`		|
+`marital_status`	|	Either SOLTERO, CASADO, DIVORCIADO, VIUDO (Single, Married, Divorced, Widowed)
+`dt_marriage`		|
+`nombre_spouse`	|
 
 The standard legal format for names is: `patronym matronym firstname middlename`.  This contrasts with the "social format" which has the prenames first.  The citizen's name is almost always in the legal format, but the other names vary widely.  Sometimes the record will be in standard legal form, but it's also common for the name to be `firstname patronym` (i.e., in social format, and only one surname).
 
@@ -38,12 +31,12 @@ Marge's parents are Clancy Bouvier & Jacqueline Gurney.  In Spanish-style naming
 |nombre	|	dt_birth	|	nombre_padre	|	nombre_madre	|	marital_status	|	dt_marriage	|	nombre_spouse |
 | ---	| ---	|	---						| ---				|	---				|	---			|	---	|
 Simpson Olsen Homer Jay	|	1956/05/12	| Abe Simpson	|	Mona Olsen	|	CASADO	|	1981/09/29	|	Marge Bouvier
-Bouvier Gurney Marjorie Jacqueline	|	1956/10/01	|	Clancy Bouvier	|	Jacqueline Gurney	|	CASADO	|	1981/09/29	|	Simpson Homer
+Bouvier Gurney Marjorie Jacqueline	|	1956/10/01	| Bouvier Clancy	|	Gurney Jacqueline	|	CASADO	|	1981/09/29	|	Simpson Homer
 Simpson Bouvier	Bart Jojo |	1981/04/01	|	Simpson Homer	| Bouvier Marge	|	SOLTERO
 Simpson Bouvier Lisa Marie| 1983/05/09	|	Homer Simpson	| Marge Bouvier	|	SOLTERO
 Simpson Bouvier Margaret Evelyn	|	1989/01/01	| Simpson Homer Jay	|	Bouvier Marjorie	| SOLTERO
 
-
+There are obviously plenty of complications here: the order of apellidos and nombres isn't consistent, nicknames, etc.  Real data includes these issues, as well as multi-part names (such as "Van der Graff"), substitutions ("Espinoza" vs "Espinosa"), dedications ("del Nino Jesus")
 
 
 ===============================
