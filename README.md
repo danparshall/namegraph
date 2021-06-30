@@ -40,9 +40,9 @@ Marge's parents are Clancy Bouvier & Jacqueline Gurney.  In Spanish-style naming
 | ---	| ---	|	---						| ---				|	---				|	---			|	---	|
 Simpson Olsen Homer Jay	|	1956/05/12	| Abe Simpson	|	Mona Olsen	|	CASADO	|	1981/09/29	|	Marge Bouvier
 Bouvier Gurney Marjorie Jacqueline	|	1956/10/01	|	Clancy Bouvier	|	Jacqueline Gurney	|	CASADO	|	1981/09/29	|	Simpson Homer
-Bart Jojo Simpson Bouvier	|	1981/04/01
-Lisa Marie Simpson Bouvier	| 1983/05/09
-Margaret Evelyn Simpson Bouvier
+Simpson Bouvier	Bart Jojo |	1981/04/01	|	Simpson Homer	| Bouvier Marge	|	SOLTERO
+Simpson Bouvier Lisa Marie| 1983/05/09	|	Homer Simpson	| Marge Bouvier	|	SOLTERO
+Simpson Bouvier Margaret Evelyn	|	1989/01/01	| Simpson Homer Jay	|	Bouvier Marjorie	| SOLTERO
 
 
 Chart taken from
