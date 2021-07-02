@@ -41,8 +41,12 @@ There are obviously plenty of complications here: the order of apellidos and nom
 
 ===============================
 
+# Setup
+Basic packages:
+`conda create -n namegraph python=3 pandas ipython matplotlib unidecode fuzzywuzzy tqdm jupyter`
 
-Project Organization
+
+# Project Organization
 ------------
 
     ├── LICENSE
