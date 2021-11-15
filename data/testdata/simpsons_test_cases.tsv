@@ -1,0 +1,6 @@
+cedula	nombre	gender	dt_birth	nombre_spouse	dt_death	marital_status	place_birth	nombre_padre	nombre_madre	ced_spouse	ced_padre	ced_madre	is_nat	is_nat_padre	is_nat_madre	dt_marriage
+1	Simpson Olsen Homer Jay	M	12/05/1956	Bouvier Marge		CASADO		Simpson Abe	Olsen Mona	2			TRUE	TRUE	TRUE	29/09/1981
+2	Bouvier Gurney Marjorie Jacqueline	F	1/10/1957	Simpson Homer		CASADO		Bouvier Clancy	Gurney Jacqueline	1			TRUE	TRUE	TRUE	29/09/1981
+3	Simpson Bouvier Bart Jojo	M	1/04/1981			SOLTERO		Simpson Homer	Bouvier Marge		1	2	TRUE	TRUE	TRUE	
+4	Simpson Bouvier Lisa Marie	F	9/05/1983			SOLTERO		Homer Simpson	Marge Bouvier		1	2	TRUE	TRUE	TRUE	
+5	Simpson Bouvier Margaret Evelyn	F	1/01/1989			SOLTERO		Simpson Homer Jay	Bouvier Marjorie		1	2	TRUE	TRUE	TRUE	

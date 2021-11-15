@@ -1,0 +1,6 @@
+cedula	nombre	prenames	gender	nombre_padre	sur_padre	has_padre	is_plegal	nombre_madre	sur_madre	has_madre	is_mlegal	is_funky	nlen_padre	nlen_madre	n_char_nombre	n_char_prenames	maybe_husb
+1	Simpson Olsen Homer Jay	Homer Jay	M	Simpson Abe	Simpson	True	True	Olsen Mona	Olsen	True	True	False	2	2	23	9	False
+2	Bouvier Gurney Marjorie Jacqueline	Marjorie Jacqueline	F	Bouvier Clancy	Bouvier	True	True	Gurney Jacqueline	Gurney	True	True	False	2	2	34	19	False
+3	Simpson Bouvier Bart Jojo	Bart Jojo	M	Simpson Homer	Simpson	True	True	Bouvier Marge	Bouvier	True	True	False	2	2	25	9	False
+4	Simpson Bouvier Lisa Marie	Lisa Marie	F	Homer Simpson	Simpson	True	True	Marge Bouvier	Bouvier	True	True	False	2	2	26	10	False
+5	Simpson Bouvier Margaret Evelyn	Margaret Evelyn	F	Simpson Homer Jay	Simpson	True	True	Bouvier Marjorie	Bouvier	True	True	False	2	2	31	15	False
