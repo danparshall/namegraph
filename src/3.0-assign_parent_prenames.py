@@ -24,9 +24,6 @@ tqdm.pandas()
 full_run = True
 N_ROWS = None  # 1000000
 READ_DATE = '20200824'
-READ_DATE = '20201026'
-READ_DATE = '20201111'
-
 
 LOC_RAW = "../data/raw/"
 LOC_INTERIM = "../data/interim/"
@@ -152,7 +149,7 @@ def merge_underscore_names(ncounts):
     return pd.concat([ncounts, subspace], axis=0)
 
 
-allnames = pd.read_csv("../data/interim/ALLNAMES_" +
+allnames = pd.read_csv(LOC_INTERIM+"ALLNAMES_" +
                        READ_DATE + ".tsv", sep='\t')
 allnames[allnames.obsname == 'RODRIGUEZ']  # use as prename looks legit
 
@@ -495,19 +492,19 @@ Get padre/madre prenames
 if full_run:
     padre_prenames = nf.progress_apply(lambda row: extract_prename_parent(row, 'nombre_padre'), 
                                        axis=1, result_type='expand')
-    padre_prenames.to_csv("../data/interim/PADRES_" + TODAY + ".tsv", sep='\t', index=False)
+    padre_prenames.to_csv(LOC_INTERIM+"PADRES_" + TODAY + ".tsv", sep='\t', index=False)
 else:
-    padre_prenames = pd.read_csv('../data/interim/PADRES_' + READ_DATE + ".tsv", sep='\t')
+    padre_prenames = pd.read_csv(LOC_INTERIM+'PADRES_' + READ_DATE + ".tsv", sep='\t')
 
 # 2h
-del padre_prenames
+# del padre_prenames
 
 if full_run:
     madre_prenames = nf[:1000].progress_apply(lambda row: extract_prename_parent(row, 'nombre_madre'), 
                                            axis=1, result_type='expand')
-    madre_prenames.to_csv("../data/interim/MADRES_" + TODAY + ".tsv", sep='\t', index=False)
+    madre_prenames.to_csv(LOC_INTERIM+"MADRES_" + TODAY + ".tsv", sep='\t', index=False)
 else:
-    madre_prenames = pd.read_csv('../data/interim/MADRES_' + READ_DATE + ".tsv", sep='\t')
+    madre_prenames = pd.read_csv(LOC_INTERIM+'MADRES_' + READ_DATE + ".tsv", sep='\t')
 
 # 2h
 if 'cedula' not in padre_prenames.columns:
