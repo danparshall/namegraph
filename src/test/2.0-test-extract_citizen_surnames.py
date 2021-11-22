@@ -40,11 +40,8 @@ full_run = True
 N_ROWS = None  # 100000
 READ_DATE = '20211028'
 
-LOC_RAW = "../data/testdata/"
-LOC_INTERIM = "../data/testdata/interim/"
-
-LOC_RAW = "D:/Windows/Desktop/tmp_initial_namegraph/"
-LOC_INTERIM = LOC_RAW + "out/"
+LOC_RAW = "../../data/testdata/"
+LOC_INTERIM = "../../data/testdata/interim/"
 
 TODAY = dt.datetime.now().strftime("%Y%m%d")
 TODAY
