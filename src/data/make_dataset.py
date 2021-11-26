@@ -6,10 +6,14 @@ from pathlib import Path
 
 
 
+
 # load repo files
 import cleanup
+import extract
+
 from importlib import reload
 reload(cleanup)
+reload(extract)
 
 
 # %run make_dataset.py "../../data/raw/SAMP_100k.tsv" '../../data/interim/'
@@ -17,22 +21,33 @@ reload(cleanup)
 
 @click.command()
 @click.argument('filepath_raw', type=click.Path(exists=True))
-@click.argument('filepath_interim', type=click.Path())
-def main(filepath_raw, filepath_interim):
+@click.argument('folder_interim', type=click.Path())
+def main(filepath_raw, folder_interim):
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../interim).
     """
     logger = logging.getLogger(__name__)
     logger.info('making interim data set from raw data')
 
+    ## STUFF FROM NB 1.0
     print("Loading registry")
     rf = cleanup.load_registry(filepath_raw, logger)
 
     print("Cleaning registry")
     rf = cleanup.clean_nombres(rf, folder_interim)
 
-    print("Parsing rows")
+
+    ## BEGIN NB 2.0
+    print("Parsing rows to extract surnames")
     surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
+
+
+
+    ## BEGIN NB 3.0
+
+
+
+    ## BEGIN 4.0
 
 
 
