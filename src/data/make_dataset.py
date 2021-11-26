@@ -2,18 +2,39 @@
 import click
 import logging
 from pathlib import Path
-from dotenv import find_dotenv, load_dotenv
+#from dotenv import find_dotenv, load_dotenv
+
+
+
+# load repo files
+import cleanup
+from importlib import reload
+reload(cleanup)
+
+
+# %run make_dataset.py "../../data/raw/SAMP_100k.tsv" '../../data/interim/'
 
 
 @click.command()
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-def main(input_filepath, output_filepath):
+@click.argument('filepath_raw', type=click.Path(exists=True))
+@click.argument('filepath_interim', type=click.Path())
+def main(filepath_raw, filepath_interim):
     """ Runs data processing scripts to turn raw data from (../raw) into
-        cleaned data ready to be analyzed (saved in ../processed).
+        cleaned data ready to be analyzed (saved in ../interim).
     """
     logger = logging.getLogger(__name__)
-    logger.info('making final data set from raw data')
+    logger.info('making interim data set from raw data')
+
+    print("Loading registry")
+    rf = cleanup.load_registry(filepath_raw, logger)
+
+    print("Cleaning registry")
+    rf = cleanup.clean_nombres(rf, folder_interim)
+
+    print("Parsing rows")
+    surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
+
+
 
 
 if __name__ == '__main__':
@@ -25,6 +46,6 @@ if __name__ == '__main__':
 
     # find .env automagically by walking up directories until it's found, then
     # load up the .env entries as environment variables
-    load_dotenv(find_dotenv())
+#    load_dotenv(find_dotenv())
 
     main()
