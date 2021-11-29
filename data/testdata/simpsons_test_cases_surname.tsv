@@ -1,0 +1,6 @@
+cedula	sur_padre	sur_madre	prenames	has_padre	is_plegal	has_madre	is_mlegal
+1	Simpson	Olsen	Homer Jay	TRUE	TRUE	TRUE	TRUE
+2	Bouvier	Gurney	Marjorie Jacqueline	TRUE	TRUE	TRUE	TRUE
+3	Simpson	Bouvier	Bart Jojo	TRUE	TRUE	TRUE	TRUE
+4	Simpson	Bouvier	Lisa Marie	TRUE	TRUE	TRUE	TRUE
+5	Simpson	Bouvier	Margaret Evelyn	TRUE	TRUE	TRUE	TRUE

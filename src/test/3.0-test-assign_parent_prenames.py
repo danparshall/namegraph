@@ -23,10 +23,10 @@ tqdm.pandas()
 
 full_run = True
 N_ROWS = None  # 1000000
-READ_DATE = '20200824'
+READ_DATE = '20211122'
 
-LOC_RAW = "../data/raw/"
-LOC_INTERIM = "../data/interim/"
+LOC_RAW = "../../data/testdata/"
+LOC_INTERIM = "../../data/testdata/interim/"
 
 TODAY = dt.datetime.now().strftime("%Y%m%d")
 
@@ -149,7 +149,7 @@ def merge_underscore_names(ncounts):
     return pd.concat([ncounts, subspace], axis=0)
 
 
-allnames = pd.read_csv(LOC_INTERIM+"ALLNAMES_" +
+allnames = pd.read_csv(LOC_INTERIM + "ALLNAMES_" +
                        READ_DATE + ".tsv", sep='\t')
 allnames[allnames.obsname == 'RODRIGUEZ']  # use as prename looks legit
 
@@ -512,6 +512,66 @@ if 'cedula' not in padre_prenames.columns:
 len(nf)
 
 """
+Test PADRES
+"""
+new_types = {'cedula': str, 'sur1': str, 'sur2': str, 'pre1': str,
+             'pre2': str, 'pre3': str, 'junk': str, 'flag': bool
+             }
+
+test_cases_PADRES = pd.read_csv(LOC_RAW + "simpsons_test_cases_padres.tsv",
+                                sep='\t', dtype=new_types, keep_default_na=False, na_values=nan_values)
+test_cases_PADRES.fillna('',inplace = True)
+
+for i in range(2):
+    print(".................................")
+print("padres test")
+
+for row in test_cases_PADRES.to_dict(orient='records'):
+    try:
+        res = padre_prenames[padre_prenames.cedula == 
+                                row['cedula']].iloc[0].to_dict()
+    except IndexError:
+        print(row['cedula'], ": NOT IN THIS SUBFRAME")
+        continue
+    if res == row:
+        print(row['cedula'], ": OK")
+    else:
+        print(row['cedula'], ": FAILED")
+        print(row)
+        print(res)
+
+"""
+Test MADRES
+"""
+new_types = {'cedula': str, 'sur1': str, 'sur2': str, 'pre1': str,
+             'pre2': str, 'pre3': str, 'junk': str, 'flag': bool
+             }
+
+test_cases_MADRES = pd.read_csv(LOC_RAW + "simpsons_test_cases_madres.tsv",
+                                  sep='\t', dtype=new_types, keep_default_na=False, na_values=nan_values)
+test_cases_MADRES.fillna('',inplace = True)
+
+for i in range(2):
+    print(".................................")
+print("madres test")
+
+for row in test_cases_MADRES.to_dict(orient='records'):
+    try:
+        res = madre_prenames[madre_prenames.cedula ==
+                             row['cedula']].iloc[0].to_dict()
+    except IndexError:
+        print(row['cedula'], ": NOT IN THIS SUBFRAME")
+        continue
+    if res == row:
+        print(row['cedula'], ": OK")
+    else:
+        print(row['cedula'], ": FAILED")
+        print(row)
+        print(res)
+
+
+
+"""
 Attempt matching (should do this in another notebook)
 """
 nan_values = ['-1.#IND', '1.#QNAN', '1.#IND', '-1.#QNAN', '#N/A N/A', '#N/A', 'N/A', 'n/a',  # 'NA' is sometimes name
@@ -527,7 +587,7 @@ dtypes_reg = {'cedula': str, 'nombre': str, 'gender': 'category', 'nationality':
               }
 
 usecols = ['cedula', 'dt_birth', 'dt_death', 'dt_marriage', 'nombre_spouse', ]
-rf = pd.read_csv(LOC_RAW + "REG_NAMES_" + READ_DATE + ".tsv", sep='\t', dtype=dtypes_reg,
+rf = pd.read_csv(LOC_RAW + "simpsons_test_cases.tsv", sep='\t', dtype=dtypes_reg,
                  parse_dates=['dt_birth', 'dt_death', 'dt_marriage'], usecols=usecols,
                  keep_default_na=False, na_values=nan_values,
                  nrows=N_ROWS
@@ -538,23 +598,22 @@ rf.head()
 nf = nf.merge(rf, how='left', on='cedula')
 nf['nombre_spouse'] = nf.nombre_spouse.fillna('')
 del rf
-padre_bothsur = padre_prenames[(padre_prenames.sur2 != "") & (
-    nf.dt_birth >= dt.datetime(1960, 1, 1))]
-len(padre_bothsur)
-targets = nf[nf.cedula.isin(set(padre_bothsur.cedula))]
-targets.head(8)
-target = targets.iloc[1]
-target
-target_padre = padre_prenames[padre_prenames.cedula == target.cedula].iloc[0]
-target_padre
-padre_prenames.head()
-obv_padres = nf[nf.has_padre & nf.is_plegal & (nf.nlen_padre == 4)][[
-    'cedula', 'nombre_padre']]
-obv_padres
+# padre_bothsur = padre_prenames[(padre_prenames.sur2 != "") & (
+#     nf.dt_birth >= dt.datetime(1960, 1, 1))]
+# len(padre_bothsur)
+# targets = nf[nf.cedula.isin(set(padre_bothsur.cedula))]
+# print(targets.head())
+# target = targets.iloc[1]
+# target_padre = padre_prenames[padre_prenames.cedula == target.cedula].iloc[0]
+# target_padre
+# padre_prenames.head()
+# obv_padres = nf[nf.has_padre & nf.is_plegal & (nf.nlen_padre == 4)][[
+#     'cedula', 'nombre_padre']]
+# obv_padres
 
-whoa = nf.merge(obv_padres.rename(
-    columns={'cedula': 'ced_kid', 'nombre_padre': 'nombre'}), on='nombre')
-len(whoa)
+# whoa = nf.merge(obv_padres.rename(
+#     columns={'cedula': 'ced_kid', 'nombre_padre': 'nombre'}), on='nombre')
+# len(whoa)
 
 nan_values = ['-1.#IND', '1.#QNAN', '1.#IND', '-1.#QNAN', '#N/A N/A', '#N/A', 'N/A', 'n/a',  # 'NA' is sometimes name
               '<NA>', '#NA', 'NULL', 'null', 'NaN', '-NaN', 'nan', '-nan', '']
@@ -568,31 +627,31 @@ dtypes_reg = {'cedula': str, 'nombre': str, 'gender': 'category', 'nationality':
               }
 
 usecols = ['cedula', 'ced_padre', ]
-rf = pd.read_csv(LOC_RAW + "REG_NAMES_" + READ_DATE + ".tsv", sep='\t', dtype=dtypes_reg,
+rf = pd.read_csv(LOC_RAW + "simpsons_test_cases.tsv", sep='\t', dtype=dtypes_reg,
                  usecols=usecols,
                  keep_default_na=False, na_values=nan_values,
                  nrows=N_ROWS
                  )
 print("Loaded {0} rows".format(len(rf)))
-whoa = whoa.merge(rf, on='cedula', how='left', suffixes=('_pred', '_obs'))
-whoa.sample(30)
-nf.head()
-sub_pad = nf[(nf.sur_padre == target_padre.sur1) & (nf.sur_madre == target_padre.sur2)
-             & (nf.gender == 1)
-             & (nf.dt_birth <= dt.datetime(target.dt_birth.year - 13, target.dt_birth.month, target.dt_birth.day))
-             ]
-sub_pad
-sub_mad = nf[(nf.sur_padre == "VERGARA") & (nf.gender == 2)
-             & (nf.dt_birth <= dt.datetime(target.dt_birth.year - 13, target.dt_birth.month, target.dt_birth.day))]
-len(sub_mad)
+# whoa = whoa.merge(rf, on='cedula', how='left', suffixes=('_pred', '_obs'))
+# whoa.sample(30)
+# nf.head()
+# sub_pad = nf[(nf.sur_padre == target_padre.sur1) & (nf.sur_madre == target_padre.sur2)
+#              & (nf.gender == 1)
+#              & (nf.dt_birth <= dt.datetime(target.dt_birth.year - 13, target.dt_birth.month, target.dt_birth.day))
+#              ]
+# sub_pad
+# sub_mad = nf[(nf.sur_padre == "VERGARA") & (nf.gender == 2)
+#              & (nf.dt_birth <= dt.datetime(target.dt_birth.year - 13, target.dt_birth.month, target.dt_birth.day))]
+# len(sub_mad)
 
-whoa_padre = nf[['cedula', 'nombre']].rename({'cedula': 'ced_padre', 'nombre': 'nombre_padre'}, axis=1
-                                             ).merge(nf.loc[(nf.nlen_padre == 4), ['cedula', 'nombre_padre']], on='nombre_padre')
-print("# naive-matched padre :", len(whoa_padre))
+# whoa_padre = nf[['cedula', 'nombre']].rename({'cedula': 'ced_padre', 'nombre': 'nombre_padre'}, axis=1
+#                                              ).merge(nf.loc[(nf.nlen_padre == 4), ['cedula', 'nombre_padre']], on='nombre_padre')
+# print("# naive-matched padre :", len(whoa_padre))
 
-whoa_madre = nf[['cedula', 'nombre']].rename({'cedula': 'ced_madre', 'nombre': 'nombre_madre'}, axis=1
-                                             ).merge(nf.loc[(nf.nlen_padre == 4), ['cedula', 'nombre_madre']], on='nombre_madre')
-print("# naive-matched madre :", len(whoa_padre))
+# whoa_madre = nf[['cedula', 'nombre']].rename({'cedula': 'ced_madre', 'nombre': 'nombre_madre'}, axis=1
+#                                              ).merge(nf.loc[(nf.nlen_padre == 4), ['cedula', 'nombre_madre']], on='nombre_madre')
+# print("# naive-matched madre :", len(whoa_padre))
 """
 if padre starts with surname, it's in legal form.  Check the evidence for other name chunks
 if padre ends with surname, it's in shortened normal form.  
@@ -742,7 +801,7 @@ def findit(row):
     return row.nombre_padre.startswith(row.sur_padre)
 
 
-tst[tst.apply(lambda row: findit(row), axis=1)]
+# tst[tst.apply(lambda row: findit(row), axis=1)]
 
 
 def extract_parent_prename(row):
