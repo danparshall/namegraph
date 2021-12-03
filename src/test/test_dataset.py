@@ -5,10 +5,14 @@ from pathlib import Path
 #from dotenv import find_dotenv, load_dotenv
 
 # load repo files
-import cleanup
-import extract
+import test
 
 from importlib import reload
+
+import sys
+sys.path.append("../data")
+import cleanup
+import extract
 reload(cleanup)
 reload(extract)
 
@@ -43,13 +47,13 @@ def main(filepath_raw, folder_interim):
     print("Cleaning registry")
     rf = cleanup.clean_nombres(rf, folder_interim)
 
-    cleanup.test_data(rf, '../../data/testdata/simpsons_test_cases.tsv', dtypes_namedata, date_cols)
+    test.test_data(rf, '../../data/testdata/simpsons_test_cases.tsv', dtypes_namedata, date_cols)
 
     ## BEGIN NB 2.0
     print("Parsing rows to extract surnames")
     surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
 
-    cleanup.test_data(surnames_extracted, '../../data/testdata/simpsons_test_cases_surname.tsv', dtypes_surname)
+    test.test_data(surnames_extracted, '../../data/testdata/simpsons_test_cases_surname.tsv', dtypes_surname)
 
     ## BEGIN NB 3.0
 

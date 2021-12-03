@@ -261,26 +261,6 @@ def fix_nombre(nombre):
         nombre = "-".join(nombre.split("- "))
     return nombre
 
-def test_data(org_data, test_data_path, dtypes, date_col = None):
-    test = pd.read_csv(test_data_path, sep='\t', parse_dates=date_col, dtype=dtypes, keep_default_na=False, na_values=nan_values)
-    print("Test",test_data_path)
-
-    for row in test.to_dict(orient='records'):
-        try:
-            # for key in row.keys():
-            #     if pd.isnull(row[key]):
-            #         row[key] = ''
-            res = org_data[org_data.cedula == row['cedula']].iloc[0].to_dict()
-        except IndexError:
-            print(row['cedula'], ": NOT IN THIS SUBFRAME")
-            continue
-        if res == row:
-            print(row['cedula'], ": OK")
-        else:
-            print(row['cedula'], ": FAILED")
-            print(row)
-            print(res)
-
 def load_registry(filepath_raw, logger, N_ROWS=None):
 
     date_cols = ['dt_birth', 'dt_death', 'dt_marriage']
