@@ -22,6 +22,10 @@ dtypes_namedata = { 'cedula': str, 'nombre': str, 'nombre_spouse': str, 'marital
                     'is_nat': bool, 'is_nat_padre': bool, 'is_nat_madre': bool,
                     }
 
+dtypes_surname = {'cedula': str, 'sur_padre': str, 'sur_madre': str, 'prenames': str,
+                  'has_padre': bool, 'is_plegal': bool, 'has_madre': bool, 'is_mlegal': bool,
+                  }
+
 @click.command()
 @click.argument('filepath_raw', type=click.Path(exists=True))
 @click.argument('folder_interim', type=click.Path())
@@ -42,10 +46,10 @@ def main(filepath_raw, folder_interim):
     cleanup.test_data(rf, '../../data/testdata/simpsons_test_cases.tsv', dtypes_namedata, date_cols)
 
     ## BEGIN NB 2.0
-    # print("Parsing rows to extract surnames")
-    # surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
+    print("Parsing rows to extract surnames")
+    surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
 
-
+    cleanup.test_data(surnames_extracted, '../../data/testdata/simpsons_test_cases_surname.tsv', dtypes_surname)
 
     ## BEGIN NB 3.0
 
