@@ -12,8 +12,7 @@ from importlib import reload
 reload(cleanup)
 reload(extract)
 
-
-# %run make_dataset.py "../../data/raw/SAMP_100k.tsv" '../../data/interim/'
+# %run test_dataset.py "../../data/testdata/test_simpsons.tsv" '../../data/testdata/interim/'
 
 date_cols = ['dt_birth', 'dt_death', 'dt_marriage']
 
@@ -40,11 +39,11 @@ def main(filepath_raw, folder_interim):
     print("Cleaning registry")
     rf = cleanup.clean_nombres(rf, folder_interim)
 
-    cleanup.test_data(rf, '../../data/simpsons_test_cases.tsv', dtypes_namedata)
+    cleanup.test_data(rf, '../../data/testdata/simpsons_test_cases.tsv', dtypes_namedata, date_cols)
 
     ## BEGIN NB 2.0
-    print("Parsing rows to extract surnames")
-    surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
+    # print("Parsing rows to extract surnames")
+    # surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
 
 
 
