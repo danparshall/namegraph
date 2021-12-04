@@ -41,6 +41,8 @@ def main(filepath_raw, folder_interim):
     print("Parsing rows to extract surnames")
     surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
 
+    print("Cleaning surnames")
+    nf, funky_prenames = extract.clean_surnames(rf, surnames_extracted)
 
 
     ## BEGIN NB 3.0
