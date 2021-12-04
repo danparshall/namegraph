@@ -154,7 +154,7 @@ def parse_fullrow(row):
                                 m_de_pre_nombre.group(1).split()
 
                         mom_parts = nombre_madre.split()
-                        m_de_pre_madre = re_de_pre.match(
+                        m_de_pre_madre = re_de_pre_UNDERSCORE.match(
                             ' '.join(mom_parts[1:]))
                         if m_de_pre_madre:
                             # keep 'nombre_madre' as string

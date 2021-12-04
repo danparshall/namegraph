@@ -264,8 +264,6 @@ def fix_nombre(nombre):
         nombre = "-".join(nombre.split("- "))
     return nombre
 
-
-
 def load_registry(filepath_raw, logger, N_ROWS=None):
 
     date_cols = ['dt_birth', 'dt_death', 'dt_marriage']
@@ -276,7 +274,7 @@ def load_registry(filepath_raw, logger, N_ROWS=None):
                   'ced_spouse': str, 'ced_padre': str, 'ced_madre': str,
                   'is_nat':bool, 'is_nat_padre':bool, 'is_nat_madre':bool
                   }
-    rf = pd.read_csv(filepath_raw, sep='\t', encoding='latin',
+    rf = pd.read_csv(filepath_raw, sep='\t', encoding='utf-8',
                      parse_dates=date_cols, dtype=dtypes_reg,
                      keep_default_na=False, na_values=nan_values,
                      nrows=N_ROWS,
