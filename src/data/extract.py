@@ -49,7 +49,7 @@ def get_substrings(nombre, START=0):
                 yield sub
 
 
-
+re_de_pre = re.compile(r"(^.*)\s(DEL?\s\w+.*$)")
 re_de_pre_UNDERSCORE = re.compile(r"(^.*)\s(DEL?_\w+.*$)")
 def parse_fullrow(row):
     # this function expects multi-token names to be handled already with underscores
@@ -203,3 +203,137 @@ def parse_fullrow(row):
 
 
 
+
+# There are plenty of prenames which have some sort of honorific(e.g. "DEL CARMEN").  The goal here is to find any of those, and render them into a single token(e.g. "DEL_CARMEN").
+
+# By definition, this only applies to names with at least 3 tokens(since the honorific is minimum of 2, and the prename is a minimum of 1).
+
+# Occasionally, someone will have something like "SANTA DEL CARMEN".  In practice, they're referred to as "CARMEN".
+
+# Because of cleaning in NB 1.0, this section has almost nothing to catch.
+
+# in all cases, we look for a word boundary as the first group, then our funky name as the second
+
+re_von = re.compile(u"(\s)(V[AO]N \w{2,})(\s|$)")              # these results are subset of "re_vande"
+re_vande = re.compile(u"(\s)(V[AO]N DE[RN]? \w{2,})(\s|$)")
+re_sant = re.compile(u"(\s)(SANT?A? \w{2,})(\s|$)")            # SAN and SANTA (SANTO doesn't form compounds)
+re_dela = re.compile(u"(\s)(DE L[AO]S? ?\w{2,})(\s|$)")   # these results are subset of "re_laos"
+re_laos = re.compile(u"(\s)(L[AEO]S? \w{2,})(\s|$)")
+re_del  = re.compile(u"(\s)(DEL \w{2,})(\s|$)")
+re_de   = re.compile(r"(\s)(DE \w{2,})(\s|$)")
+
+
+
+
+def clean_surnames(rf, surnames_extracted, funky_prenames = set()):
+
+    # set column order
+    surnames_extracted = surnames_extracted[['cedula', 'sur_padre', 'has_padre', 'is_plegal',
+                                             'sur_madre', 'has_madre', 'is_mlegal', 'prenames']]
+
+    ## the "nf" (name frame) is just the subset of well-behaved names
+    # confirm that the indexing is still correct
+    if not (rf.index == surnames_extracted.index).all():
+        rf.reset_index(inplace=True, drop=True)
+    assert (rf.cedula == surnames_extracted.cedula).all()
+
+    # join the parsed names to the originals (but only retain the well-behaved ones)
+    nf = pd.concat([rf[['cedula','nombre','nombre_padre','nombre_madre','gender']], surnames_extracted.iloc[:,1:]], axis=1)
+
+    nf = nf.loc[(nf.sur_padre.notnull()) & (nf.sur_padre != "") & nf.has_padre & 
+                (nf.sur_madre.notnull()) & (nf.sur_madre != "") & nf.has_madre & 
+                (nf.prenames.notnull() & (nf.prenames != "")),
+            ['cedula','nombre','prenames', 'gender', 
+             'nombre_padre','sur_padre','has_padre', 'is_plegal',
+             'nombre_madre','sur_madre','has_madre', 'is_mlegal']]
+    nf['is_funky'] = nf.prenames.map(lambda x: regex_funky_prenames(x, funky_prenames))
+    funky_prenames = list(funky_prenames)
+
+    funky_prenames.sort(reverse=True, key=len)
+    print("# funkies :", len(funky_prenames))
+    nf.loc[nf.is_funky, 'prenames'] = nf[nf.is_funky].prenames.progress_map(lambda x: fix_funk(x, funky_prenames))
+
+    # now that there are only a few hundred funkies (most are handled in data-cleaning), this is faster by 100x
+    nf['nlen_padre'] = nf.nombre_padre.map(lambda x: len(x.split()))
+    nf['nlen_madre'] = nf.nombre_madre.map(lambda x: len(x.split()))
+    nf['n_char_nombre'] = nf.nombre.map(len)
+    nf['n_char_prenames'] = nf.prenames.map(len)
+    return nf, funky_prenames
+
+
+
+def regex_funky_prenames(nombre, funky_prenames):
+    """ This is a little slow (~4mins / million rows), but pretty thorough.
+        NB: adds to "funky_prenames" as a side-effect
+    """
+    mdel   = re_del.search(nombre)
+    msant  = re_sant.search(nombre)
+    mlaos  = re_laos.search(nombre)
+    mdela  = re_dela.search(nombre)
+    mvon   = re_von.search(nombre)
+    mvande = re_vande.search(nombre)
+    mde    = re_de.search(nombre)
+    poss_funks = set()
+    if mdel:
+        poss_funks.add(mdel.group(2))
+    if msant:
+        poss_funks.add(msant.group(2))
+    if mvon:
+        # "VAN DE" types are a subset of "VAN" types
+        if mvande:
+            poss_funks.add(mvande.group(2))
+        else:
+            poss_funks.add(mvon.group(2))
+    if mlaos:
+        # "DE LA" type names are a subset of "LA" types
+        if mdela:
+            poss_funks.add(mdela.group(2))
+        else:
+            poss_funks.add(mlaos.group(2))
+    if mde:
+        poss_funks.add(mde.group(2))
+
+    if poss_funks:
+        if "ZOILA CRUZ" in poss_funks:
+            print("WTF :", nombre)
+        for funk in poss_funks:
+            funky_prenames.add(funk)
+        return True
+    else:
+        return False
+
+
+
+def fix_funk(nombre, funks):
+    """ The 'funks' list should be sorted in descending length, to prevent substrings from being clobbered.
+    
+    NB: there's a potential bug in here, bc the list is sorted according to character length, but checks
+    here are being done according to number of tokens.  But very unlikely to cause an issue, so ignoring for now
+    """
+    nlen = len(nombre.split())
+    if nlen <= 2:
+        return nombre
+    
+    for funk in funks:
+        flen = len(funk.split())
+        if (nlen > flen):
+            if (funk in nombre):
+                defunk = '_'.join(funk.split())
+                nombre = defunk.join(nombre.split(funk))
+                nlen = len(nombre.split())
+        else:
+            # since the list is sorted, once we have a match that uses all the tokens, just skip ahead
+            continue
+    return nombre
+
+
+
+def count_surnames(nf):
+    sur_counts = nf.sur_padre.value_counts()
+    sur_counts.sort_index(inplace=True)
+    sur_counts = pd.concat([sur_counts,
+                            pd.Series(data=sur_counts.index.map(
+                                lambda x: len(x.split())), index=sur_counts.index)
+                            ], axis=1)
+    sur_counts.columns = ['n_obs', 'nlen']
+    return sur_counts
