@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import re
 
 
@@ -37,6 +38,9 @@ def check_nombre_doubling(nombre):
 
 
 def get_substrings(nombre, START=0):
+    """ Generate combination of the parts of the names
+    """
+
     nlen = len(nombre)
     n_max = nlen - START
     for chunk_len in range(n_max, 0, -1):
@@ -202,4 +206,275 @@ def parse_fullrow(row):
     return out
 
 
+# these results are subset of "re_vande"
+re_von = re.compile(u"(\s)(V[AO]N \w{2,})(\s|$)")
+re_vande = re.compile(u"(\s)(V[AO]N DE[RN]? \w{2,})(\s|$)")
+# SAN and SANTA (SANTO doesn't form compounds)
+re_sant = re.compile(u"(\s)(SANT?A? \w{2,})(\s|$)")
+# these results are subset of "re_laos"
+re_dela = re.compile(u"(\s)(DE L[AO]S? ?\w{2,})(\s|$)")
+re_laos = re.compile(u"(\s)(L[AEO]S? \w{2,})(\s|$)")
+re_del = re.compile(u"(\s)(DEL \w{2,})(\s|$)")
+re_de = re.compile(r"(\s)(DE \w{2,})(\s|$)")
 
+
+def regex_funky_prenames(nombre):
+    """ This is a little slow (~4mins / million rows), but pretty thorough.  """
+
+    mdel = re_del.search(nombre)
+    msant = re_sant.search(nombre)
+
+    mlaos = re_laos.search(nombre)
+    mdela = re_dela.search(nombre)
+
+    mvon = re_von.search(nombre)
+    mvande = re_vande.search(nombre)
+
+    mde = re_de.search(nombre)
+
+    poss_funks = set()
+
+    if mdel:
+        poss_funks.add(mdel.group(2))
+    if msant:
+        poss_funks.add(msant.group(2))
+    if mvon:
+        # "VAN DE" types are a subset of "VAN" types
+        if mvande:
+            poss_funks.add(mvande.group(2))
+        else:
+            poss_funks.add(mvon.group(2))
+    if mlaos:
+        # "DE LA" type names are a subset of "LA" types
+        if mdela:
+            poss_funks.add(mdela.group(2))
+        else:
+            poss_funks.add(mlaos.group(2))
+    if mde:
+        poss_funks.add(mde.group(2))
+
+    if poss_funks:
+        if "ZOILA CRUZ" in poss_funks:
+            print("WTF :", nombre)
+        for funk in poss_funks:
+            funky_prenames.add(funk)
+        return True
+    else:
+        return False
+
+
+def fix_funk(nombre, funks):
+    """ The 'funks' list should be sorted in descending length, to prevent substrings from being clobbered.
+    
+    NB: there's a potential bug in here, bc the list is sorted according to character length, but checks
+    here are being done according to number of tokens.  But very unlikely to cause an issue, so ignoring for now
+    """
+    nlen = len(nombre.split())
+    if nlen <= 2:
+        return nombre
+
+    for funk in funks:
+        flen = len(funk.split())
+        if (nlen > flen):
+            if (funk in nombre):
+                defunk = '_'.join(funk.split())
+                nombre = defunk.join(nombre.split(funk))
+                nlen = len(nombre.split())
+        else:
+            # since the list is sorted, once we have a match that uses all the tokens, just skip ahead
+            continue
+    return nombre
+
+def parse_prename(prenames):
+    """ The surnames are parsed, but the prenames must be split up.  
+    This is possible once the multi-part prenames have been given underscores 
+    """
+
+    out = {'pre1': "", 'pre2': "", 'pre3': "", 'junk': ""}
+
+    # now assign name pices
+    pres = prenames.split()
+    if len(pres) >= 1:
+        out['pre1'] = pres[0]
+    if len(pres) >= 2:
+        out['pre2'] = pres[1]
+    if len(pres) >= 3:
+        out['pre3'] = pres[2]
+    if len(pres) >= 4:
+        out['junk'] = ' '.join(pres[3:])
+    return out
+
+
+def count_all_names(freq):
+    tmp = pd.concat([freq.sur_padre, freq.sur_madre], axis=0).value_counts()
+    count_sur = pd.DataFrame({'obsname': tmp.index, 'n_sur': tmp.values})
+    tmp = pd.concat([freq.pre1, freq.pre2], axis=0).value_counts()
+    count_pre = pd.DataFrame({'obsname': tmp.index, 'n_pre': tmp.values})
+
+    count_names = count_sur.merge(count_pre, on='obsname', how='outer')
+    count_names.fillna(0, inplace=True)
+
+    # add null record, so that null names get weight factor of 1
+    count_names.loc[count_names.obsname == "", ['n_sur', 'n_pre']] = 0
+
+    count_names['n_sur'] = count_names.n_sur + 0.5
+    count_names['n_pre'] = count_names.n_pre + 0.5
+
+    count_names['sratio'] = count_names.n_sur / count_names.n_pre
+    count_names['pratio'] = count_names.n_pre / count_names.n_sur
+
+    return count_names
+
+
+def is_name_multimatch(nombre):
+    mdel = re_del.search(nombre)
+    msant = re_sant.search(nombre)
+
+    mlaos = re_laos.search(nombre)
+    mdela = re_dela.search(nombre)
+
+    mde = re_de.search(nombre)
+
+    mvon = re_von.search(nombre)
+    mvande = re_vande.search(nombre)
+
+    if mdel or msant or mlaos or mdela or mde or mvon or mvande:
+        return True
+    else:
+        return False
+
+def freqfile(nf):
+    """ Generates FREQFILE and NEWFREQFILE
+    """
+    freq = pd.concat([nf[['cedula', 'nombre', 'sur_padre', 'sur_madre']],
+                     nf.progress_apply(lambda row: parse_prename(row.prenames), axis=1, result_type='expand')], axis=1)
+    freq['nlen'] = freq[['sur_padre', 'sur_madre', 'pre1', 'pre2', 'pre3', 'junk']
+                        ].replace("", np.nan).notnull().astype(int).sum(axis=1)
+
+    return freq
+
+def namecounts(freq):
+    """ Generates NAMECOUNTS
+    """
+    count_names = count_all_names(freq)
+    count_names['nlen'] = count_names.obsname.map(lambda x: len(x.split()))
+    count_names['is_multimatch'] = count_names.obsname.map(is_name_multimatch)  
+
+    return count_names  
+
+def repair_dual_surmadre(row):
+    out = {'sur_madre': "", 'prenames': ""}
+    sur_madre, pre1 = row.sur_madre.split()
+
+    out['prenames'] = pre1 + ' ' + row.prenames
+    out['sur_madre'] = sur_madre
+    return out
+
+
+def poss_husb(row):
+    # tried both simple search and regex; no difference in speed
+    return " DE " + row.sur_padre in row.nombre_madre
+
+
+def merge_underscore_names(ncounts):
+    under_prenames = set(
+        ncounts[ncounts.obsname.map(lambda x: "_" in x)].obsname)
+
+    for upre in tqdm(under_prenames):
+
+        u_rec = ncounts[ncounts.obsname == upre].iloc[0]
+
+        norm_pre = ' '.join(upre.split("_"))
+        norm_rec = ncounts[ncounts.obsname == norm_pre]
+        if len(norm_rec) == 1:
+            norm_rec = norm_rec.iloc[0]
+            ncounts.loc[ncounts.obsname == norm_pre,
+                        'n_sur'] = u_rec.n_sur + norm_rec.n_sur - 0.5
+            ncounts.loc[ncounts.obsname == norm_pre,
+                        'n_pre'] = u_rec.n_pre + norm_rec.n_pre - 0.5
+        elif len(norm_rec) == 0:
+            tmp = u_rec.copy(deep=True)
+            tmp.obsname = norm_pre
+            ncounts = ncounts.append(tmp)
+
+    ncounts = ncounts[~ncounts.obsname.isin(under_prenames)]
+    ncounts['sratio'] = ncounts.n_sur/ncounts.n_pre
+    ncounts['pratio'] = ncounts.n_pre/ncounts.n_sur
+
+    subspace = ncounts[ncounts.obsname.map(lambda x: " " in x)].copy(deep=True)
+    subspace['obsname'] = subspace.obsname.map(lambda x: "_".join(x.split()))
+    return pd.concat([ncounts, subspace], axis=0)
+
+def allnames_nf_manipulation(rf, surnames_extracted):
+    """ Return the allnames dataframe and the nf dataframe that is used
+        to construct others later.
+    """
+    # confirm that the indexing is still correct
+    if not (rf.index == surnames_extracted.index).all():
+        rf.reset_index(inplace=True, drop=True)
+    assert (rf.cedula == surnames_extracted.cedula).all()
+
+    # join the parsed names to the originals (but only retain the well-behaved ones)
+    nf = pd.concat([rf[['cedula', 'nombre', 'nombre_padre', 'nombre_madre',
+                        'gender']], surnames_extracted.iloc[:, 1:]], axis=1)
+
+    nf = nf.loc[(nf.sur_padre.notnull()) & (nf.sur_padre != "") & nf.has_padre &
+                (nf.sur_madre.notnull()) & (nf.sur_madre != "") & nf.has_madre &
+                (nf.prenames.notnull() & (nf.prenames != "")),
+                ['cedula', 'nombre', 'prenames', 'gender',
+                'nombre_padre', 'sur_padre', 'has_padre', 'is_plegal',
+                 'nombre_madre', 'sur_madre', 'has_madre', 'is_mlegal']]
+
+    """ Creation of funky prenames list
+    """
+    global funky_prenames
+    funky_prenames = set()
+
+    nf['is_funky'] = nf.prenames.map(regex_funky_prenames)
+    funky_prenames = pd.DataFrame(list(funky_prenames))
+
+    nf.loc[nf.is_funky, 'prenames'] = nf[nf.is_funky].prenames.progress_map(
+        lambda x: fix_funk(x, funky_prenames[0].tolist()))
+
+    # now that there are only a few hundred funkies (most are handled in data-cleaning), this is faster by 100x
+
+    nf['nlen_padre'] = nf.nombre_padre.map(lambda x: len(x.split()))
+    nf['nlen_madre'] = nf.nombre_madre.map(lambda x: len(x.split()))
+
+    nf['n_char_nombre'] = nf.nombre.map(len)
+    nf['n_char_prenames'] = nf.prenames.map(len)
+
+    """ FREQFILE and NAMECOUNTS but double obsname verification missing
+    """
+    freq = freqfile(nf)
+    count_names = namecounts(freq)
+
+    dual_sur = count_names[(count_names.nlen == 2) & ~
+                           count_names.is_multimatch]
+
+    dual_sur = dual_sur.apply(lambda x: x.obsname.split(),
+                              axis=1, result_type='expand')
+    dual_sur.columns = ['probably_sur', 'probably_pre']
+
+    dual_sur = dual_sur.merge(count_names[['obsname', 'sratio']],
+                              left_on='probably_sur', right_on='obsname').drop(columns=['obsname'])
+
+    dual_sur = dual_sur.merge(count_names[['obsname', 'pratio']],
+                              left_on='probably_pre', right_on='obsname').drop(columns=['obsname'])
+
+    dual_sur['evidence'] = dual_sur.sratio * dual_sur.pratio
+
+    needs_repair = dual_sur[dual_sur.evidence > 2]
+    needs_repair = set(needs_repair.probably_sur +
+                       ' ' + needs_repair.probably_pre)
+    
+    nf.loc[nf.sur_madre.isin(needs_repair), ['sur_madre', 'prenames']
+           ] = nf[nf.sur_madre.isin(needs_repair)].progress_apply(lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
+
+    nf['maybe_husb'] = nf.progress_apply(lambda row: poss_husb(row), axis=1)
+
+    """ ALLNAMES
+    """
+    allnames = merge_underscore_names(count_all_names(freq))
+
+    return nf, allnames

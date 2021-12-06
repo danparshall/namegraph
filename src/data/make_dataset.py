@@ -36,12 +36,16 @@ def main(filepath_raw, folder_interim):
     print("Cleaning registry")
     rf = cleanup.clean_nombres(rf, folder_interim)
 
-
     ## BEGIN NB 2.0
     print("Parsing rows to extract surnames")
     surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
 
+    names_cleaned, allnames = extract.allnames_nf_manipulation(
+        rf, surnames_extracted)
 
+    newfreqfile = extract.freqfile(names_cleaned)
+
+    namecounts = extract.namecounts(newfreqfile)
 
     ## BEGIN NB 3.0
 

@@ -16,7 +16,7 @@ import extract
 reload(cleanup)
 reload(extract)
 
-# %run test_dataset.py "../../data/testdata/test_simpsons.tsv" '../../data/testdata/interim/'
+# %run test_dataset.py "../../data/testdata/00-test_simpsons.tsv" '../../data/testdata/interim/'
 
 date_cols = ['dt_birth', 'dt_death', 'dt_marriage']
 
@@ -26,10 +26,27 @@ dtypes_namedata = { 'cedula': str, 'nombre': str, 'nombre_spouse': str, 'marital
                     'is_nat': bool, 'is_nat_padre': bool, 'is_nat_madre': bool,
                     }
 
-dtypes_surname = {'cedula': str, 'sur_padre': str, 'sur_madre': str, 'prenames': str,
-                  'has_padre': bool, 'is_plegal': bool, 'has_madre': bool, 'is_mlegal': bool,
-                  }
+dtypes_surname = {  'cedula': str, 'sur_padre': str, 'sur_madre': str, 'prenames': str,
+                    'has_padre': bool, 'is_plegal': bool, 'has_madre': bool, 'is_mlegal': bool,
+                    }
 
+dtypes_cleaned = {  'cedula': str, 'nombre': str, 'prenames': str, 'gender': str,
+                    'nombre_padre': str, 'sur_padre': str, 'has_padre': bool, 'is_plegal': bool,
+                    'nombre_madre': str, 'sur_madre': str, 'has_madre': bool, 'is_mlegal': bool,
+                    'is_funky': bool, 'nlen_padre': int, 'nlen_madre': int, 'n_char_nombre': int,
+                    'n_char_prename': int, 'maybe_husb': bool
+                    }
+
+dtypes_allnames = { 'obsname': str, 'n_sur': float, 'n_pre': float, 'sratio': float, 'pratio': float
+                    }
+
+dtypes_namecounts= {'obsname': str, 'n_sur': float, 'n_pre': float, 'sratio': float,
+                    'pratio': float, 'nlen': float, 'is_multimatch': bool
+                    }
+
+dtypes_newfreqfile = {  'cedula': str, 'nombre': str, 'sur_padre': str, 'sur_madre': str,
+                        'pre1': str, 'pre2': str, 'pre3': str, 'junk': str, 'nlen': int,
+                        }
 @click.command()
 @click.argument('filepath_raw', type=click.Path(exists=True))
 @click.argument('folder_interim', type=click.Path())
@@ -47,14 +64,28 @@ def main(filepath_raw, folder_interim):
     print("Cleaning registry")
     rf = cleanup.clean_nombres(rf, folder_interim)
 
-    test.test_data(rf, '../../data/testdata/simpsons_test_cases.tsv', dtypes_namedata, date_cols)
+    test.test_data(rf, '../../data/testdata/01-simpsons_test_cases.tsv', dtypes_namedata, date_cols)
 
     ## BEGIN NB 2.0
     print("Parsing rows to extract surnames")
     surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
 
-    test.test_data(surnames_extracted, '../../data/testdata/simpsons_test_cases_surname.tsv', dtypes_surname)
+    test.test_data(surnames_extracted, '../../data/testdata/02-simpsons_test_cases_surname.tsv', dtypes_surname)
 
+    names_cleaned, allnames = extract.allnames_nf_manipulation(
+        rf, surnames_extracted)
+
+    test.test_data(names_cleaned, "../../data/testdata/03-simpsons_test_cases_names_cleaned.tsv", dtypes_cleaned)
+    test.test_names(allnames, "../../data/testdata/04-simpsons_test_cases_allnames.tsv", dtypes_allnames)
+
+    newfreqfile = extract.freqfile(names_cleaned)
+
+    test.test_data(newfreqfile, "../../data/testdata/05-simpsons_test_cases_newfreqfile.tsv", dtypes_newfreqfile)
+
+    namecounts = extract.namecounts(newfreqfile)
+
+    test.test_names(namecounts, "../../data/testdata/06-simpsons_test_cases_namecounts.tsv", dtypes_newfreqfile)
+    
     ## BEGIN NB 3.0
 
 
