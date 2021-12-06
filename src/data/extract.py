@@ -95,7 +95,7 @@ def parse_fullrow(row):
                         madre = guess
                         break
 
-    # if the overlap method wasn't successful, parse them separately
+    # if the overlap method wasn't successful, parse father/mother surname separately
     if not madre and not padre:
         parts = nombre.split()
 
@@ -104,6 +104,8 @@ def parse_fullrow(row):
         # this matches longest chunk found, so it should pick up compound names like DE LA CUEVA
         try:
             if row.nombre_padre:
+                
+                # we try names that might have doubling first, befor moving to the more common situation
                 poss_padre = check_nombre_doubling(row.nombre_padre)
                 poss_pset = set(poss_padre.split())
                 if (poss_padre
@@ -113,6 +115,7 @@ def parse_fullrow(row):
                     padre = poss_padre
                     parts = ''.join(nombre.split(
                         padre, maxsplit=1)).strip().split()
+                    
                 else:
                     # start by trying everything except the last element (always a prename), and work down
                     for ind in range(len(parts)-1, 0, -1):
@@ -144,8 +147,11 @@ def parse_fullrow(row):
                     nombre_madre = row.nombre_madre
 
                     if nombre_madre.startswith(parts[0]):
-                        # in legal form, so strike any catholic addons from both citizen and mother
-                        # complicated bc surnames like "GOMEZ DE LA TORRE" mean we have to skip the zeroth token
+                    # try to remove any catholic addons from both citizen and mother
+                    # this isn't a concern when in social form
+                    # complicated bc surnames like "GOMEZ DE LA TORRE" mean we have to skip the zeroth token
+                        
+                        # if names have underscores
                         m_de_pre_nombre = re_de_pre_UNDERSCORE.match(
                             ' '.join(parts[1:]))
                         if m_de_pre_nombre:
@@ -153,8 +159,9 @@ def parse_fullrow(row):
                             parts = parts[:1] + \
                                 m_de_pre_nombre.group(1).split()
 
+                        # names without underscores
                         mom_parts = nombre_madre.split()
-                        m_de_pre_madre = re_de_pre_UNDERSCORE.match(
+                        m_de_pre_madre = re_de_pre.match(
                             ' '.join(mom_parts[1:]))
                         if m_de_pre_madre:
                             # keep 'nombre_madre' as string
@@ -225,7 +232,11 @@ re_de   = re.compile(r"(\s)(DE \w{2,})(\s|$)")
 
 
 
-def clean_surnames(rf, surnames_extracted, funky_prenames = set()):
+def clean_names(rf, surnames_extracted, funky_prenames = set()):
+    """ Uses extracted surnames as reference, to extract the prenames and clean them up
+    
+    """
+
 
     # set column order
     surnames_extracted = surnames_extracted[['cedula', 'sur_padre', 'has_padre', 'is_plegal',
@@ -265,6 +276,8 @@ def clean_surnames(rf, surnames_extracted, funky_prenames = set()):
 def regex_funky_prenames(nombre, funky_prenames):
     """ This is a little slow (~4mins / million rows), but pretty thorough.
         NB: adds to "funky_prenames" as a side-effect
+
+        SHOULD CHANGE SO THAT THE COLUMN IS PASSED IN, AND RETURNS BOTH THE MODIFIED COLUMN, AND THE DICT
     """
     mdel   = re_del.search(nombre)
     msant  = re_sant.search(nombre)
