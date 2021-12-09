@@ -173,10 +173,10 @@ re_de_pre_UNDERSCORE = re.compile(r"(^.*)\s(DEL?_\w+.*$)")
 def parse_fullrow(row):
     # this function expects multi-token names to be handled already with underscores
 
-    out = {'cedula': '', 'sur_padre': "", 'sur_madre': "", "prenames": "",
-           "has_padre": False, "is_plegal": False,
-           "has_madre": False, "is_mlegal": False}
-    out['cedula'] = row.cedula
+    out = {"cedula": row.cedula, 
+            "sur_padre": "", "sur_madre": "", "prenames": "",
+            "has_padre": False, "is_plegal": False,
+            "has_madre": False, "is_mlegal": False}
 
     if not row.nombre_padre and not row.nombre_madre:
         return out
@@ -240,7 +240,6 @@ def parse_fullrow(row):
 # Occasionally, someone will have something like "SANTA DEL CARMEN".  In practice, they're referred to as "CARMEN".
 # Because of cleaning in NB 1.0, this section has almost nothing to catch.
 # in all cases, we look for a word boundary as the first group, then our funky name as the second
-
 re_von = re.compile(u"(\s)(V[AO]N \w{2,})(\s|$)")              # these results are subset of "re_vande"
 re_vande = re.compile(u"(\s)(V[AO]N DE[RN]? \w{2,})(\s|$)")
 re_sant = re.compile(u"(\s)(SANT?A? \w{2,})(\s|$)")            # SAN and SANTA (SANTO doesn't form compounds)
@@ -248,8 +247,6 @@ re_dela = re.compile(u"(\s)(DE L[AO]S? ?\w{2,})(\s|$)")   # these results are su
 re_laos = re.compile(u"(\s)(L[AEO]S? \w{2,})(\s|$)")
 re_del  = re.compile(u"(\s)(DEL \w{2,})(\s|$)")
 re_de   = re.compile(r"(\s)(DE \w{2,})(\s|$)")
-
-
 
 
 def clean_names(rf, surnames_extracted, funky_prenames = set()):
@@ -277,9 +274,10 @@ def clean_names(rf, surnames_extracted, funky_prenames = set()):
             ['cedula','nombre','prenames', 'gender', 
              'nombre_padre','sur_padre','has_padre', 'is_plegal',
              'nombre_madre','sur_madre','has_madre', 'is_mlegal']]
+
+    # "funky_prenames" gets modified as a side-effect
     nf['is_funky'] = nf.prenames.map(lambda x: regex_funky_prenames(x, funky_prenames))
     funky_prenames = list(funky_prenames)
-
     funky_prenames.sort(reverse=True, key=len)
     print("# funkies :", len(funky_prenames))
     nf.loc[nf.is_funky, 'prenames'] = nf[nf.is_funky].prenames.progress_map(lambda x: fix_funk(x, funky_prenames))
@@ -296,8 +294,6 @@ def clean_names(rf, surnames_extracted, funky_prenames = set()):
 def regex_funky_prenames(nombre, funky_prenames):
     """ This is a little slow (~4mins / million rows), but pretty thorough.
         NB: adds to "funky_prenames" as a side-effect
-
-        SHOULD CHANGE SO THAT THE COLUMN IS PASSED IN, AND RETURNS BOTH THE MODIFIED COLUMN, AND THE DICT
     """
     mdel   = re_del.search(nombre)
     msant  = re_sant.search(nombre)
@@ -327,8 +323,6 @@ def regex_funky_prenames(nombre, funky_prenames):
         poss_funks.add(mde.group(2))
 
     if poss_funks:
-        if "ZOILA CRUZ" in poss_funks:
-            print("WTF :", nombre)
         for funk in poss_funks:
             funky_prenames.add(funk)
         return True
@@ -360,13 +354,28 @@ def fix_funk(nombre, funks):
     return nombre
 
 
+def fix_mixed_presur_names(nf, name_counts):
+    dual_sur = name_counts[(name_counts.nlen == 2) & ~name_counts.is_multimatch]
+    dual_sur = dual_sur.apply(lambda x: x.obsname.split(), axis=1, result_type='expand')
+    dual_sur.columns = ['probably_sur', 'probably_pre']
+    dual_sur = dual_sur.merge(name_counts[['obsname', 'sratio']], left_on='probably_sur', right_on='obsname').drop(columns=['obsname'])
+    dual_sur = dual_sur.merge(name_counts[['obsname', 'pratio']], left_on='probably_pre', right_on='obsname').drop(columns=['obsname'])
+    dual_sur['evidence'] = dual_sur.sratio * dual_sur.pratio
 
-def count_surnames(nf):
-    sur_counts = nf.sur_padre.value_counts()
-    sur_counts.sort_index(inplace=True)
-    sur_counts = pd.concat([sur_counts,
-                            pd.Series(data=sur_counts.index.map(
-                                lambda x: len(x.split())), index=sur_counts.index)
-                            ], axis=1)
-    sur_counts.columns = ['n_obs', 'nlen']
-    return sur_counts
+    needs_repair = dual_sur[dual_sur.evidence > 1000]
+    needs_repair = set(needs_repair.probably_sur + ' ' + needs_repair.probably_pre)
+
+    print("Repairing {} mixed pre/sur records".format(len(needs_repair)))
+    def repair_dual_surmadre(row):
+        out = {'sur_madre': "", 'prenames': ""}
+        sur_madre, pre1 = row.sur_madre.split()
+
+        out['prenames'] = pre1 + ' ' + row.prenames
+        out['sur_madre'] = sur_madre
+        return out
+
+    fix_rows = nf.sur_madre.isin(needs_repair)
+    nf.loc[fix_rows, ['sur_madre', 'prenames']
+          ] = nf[fix_rows].progress_apply(lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
+    return nf
+
