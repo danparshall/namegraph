@@ -240,13 +240,13 @@ def parse_fullrow(row):
 # Occasionally, someone will have something like "SANTA DEL CARMEN".  In practice, they're referred to as "CARMEN".
 # Because of cleaning in NB 1.0, this section has almost nothing to catch.
 # in all cases, we look for a word boundary as the first group, then our funky name as the second
-re_von = re.compile(u"(\s)(V[AO]N \w{2,})(\s|$)")              # these results are subset of "re_vande"
-re_vande = re.compile(u"(\s)(V[AO]N DE[RN]? \w{2,})(\s|$)")
-re_sant = re.compile(u"(\s)(SANT?A? \w{2,})(\s|$)")            # SAN and SANTA (SANTO doesn't form compounds)
-re_dela = re.compile(u"(\s)(DE L[AO]S? ?\w{2,})(\s|$)")   # these results are subset of "re_laos"
-re_laos = re.compile(u"(\s)(L[AEO]S? \w{2,})(\s|$)")
-re_del  = re.compile(u"(\s)(DEL \w{2,})(\s|$)")
-re_de   = re.compile(r"(\s)(DE \w{2,})(\s|$)")
+re_von = re.compile(u"(\s|^)(V[AO]N \w{2,})(\s|$)")              # these results are subset of "re_vande"
+re_vande = re.compile(u"(\s|^)(V[AO]N DE[RN]? \w{2,})(\s|$)")
+re_sant = re.compile(u"(\s|^)(SANT?A? \w{2,})(\s|$)")            # SAN and SANTA (SANTO doesn't form compounds)
+re_dela = re.compile(u"(\s|^)(DE L[AO]S? ?\w{2,})(\s|$)")   # these results are subset of "re_laos"
+re_laos = re.compile(u"(\s|^)(L[AEO]S? \w{2,})(\s|$)")
+re_del  = re.compile(u"(\s|^)(DEL \w{2,})(\s|$)")
+re_de   = re.compile(u"(\s|^)(DE \w{2,})(\s|$)")
 
 
 def clean_names(rf, surnames_extracted, funky_prenames = set()):
@@ -352,6 +352,7 @@ def fix_funk(nombre, funks):
             # since the list is sorted, once we have a match that uses all the tokens, just skip ahead
             continue
     return nombre
+
 
 
 def fix_mixed_presur_names(nf, name_counts):
