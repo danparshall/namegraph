@@ -432,7 +432,7 @@ def allnames_nf_manipulation(rf, surnames_extracted):
 
     nf['is_funky'] = nf.prenames.map(regex_funky_prenames)
     funky_prenames = pd.DataFrame(list(funky_prenames))
-
+    print(funky_prenames[0].tolist())
     nf.loc[nf.is_funky, 'prenames'] = nf[nf.is_funky].prenames.progress_map(
         lambda x: fix_funk(x, funky_prenames[0].tolist()))
 

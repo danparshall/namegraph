@@ -10,6 +10,7 @@ from pathlib import Path
 # load repo files
 import cleanup
 import extract
+import parents
 
 from importlib import reload
 reload(cleanup)
@@ -49,6 +50,13 @@ def main(filepath_raw, folder_interim):
 
     ## BEGIN NB 3.0
 
+    wts_pre, wts_sur = parents.wts(allnames)
+
+    padre = names_cleaned.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_padre'),
+                                        axis=1, result_type='expand')
+
+    madre = names_cleaned.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_madre'),
+                                        axis=1, result_type='expand')
 
 
     ## BEGIN 4.0

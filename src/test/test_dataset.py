@@ -13,8 +13,10 @@ import sys
 sys.path.append("../data")
 import cleanup
 import extract
+import parents
 reload(cleanup)
 reload(extract)
+reload(parents)
 
 # %run test_dataset.py "../../data/testdata/00-test_simpsons.tsv" '../../data/testdata/interim/'
 
@@ -83,11 +85,21 @@ def main(filepath_raw, folder_interim):
     test.test_data(newfreqfile, "../../data/testdata/05-simpsons_test_cases_newfreqfile.tsv", dtypes_newfreqfile)
 
     namecounts = extract.namecounts(newfreqfile)
-
+    
     test.test_names(namecounts, "../../data/testdata/06-simpsons_test_cases_namecounts.tsv", dtypes_newfreqfile)
     
     ## BEGIN NB 3.0
+    wts_pre, wts_sur = parents.wts(allnames)
 
+    padre = names_cleaned.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_padre', wts_pre, wts_sur),
+                                         axis=1, result_type='expand')
+
+    madre = names_cleaned.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_madre', wts_pre, wts_sur),
+                                         axis=1, result_type='expand')
+    pos = 0
+    for i in [padre, madre, allnames]:
+        i.to_csv("../../data/testdata/interim/PADRE"+str(pos)+".tsv", sep='\t', index=False)
+        pos += 1
 
 
     ## BEGIN 4.0
