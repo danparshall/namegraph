@@ -380,3 +380,37 @@ def fix_mixed_presur_names(nf, name_counts):
           ] = nf[fix_rows].progress_apply(lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
     return nf
 
+
+
+def fix_husband_addition(nf, rf, funky_prenames):
+
+    # first, identify likely cases where a mother is listed with the husband's surname as an honorific
+    # 60 minutes  (this is a check of the mother's name, so have to run it for everyone; spouse would be only women)
+    # NOTE: need to fix cases which show up as "sur_madre" == "DE".
+    # these are almost all when a woman and her mother both use husband's honorific, so algo picks it up as mother's surname
+    def poss_husb(row):
+        # tried both simple search and regex; no difference in speed
+        return " DE " + row.sur_padre in row.nombre_madre
+    maybe_husb = nf.progress_apply(lambda row: poss_husb(row), axis=1)
+
+    # second, remove the honorific from mother's name
+    def remove_husband(row):
+        out = row.copy(deep=True)
+        try:
+            madre = ''.join(row.nombre_madre.split(" DE " + row.sur_padre))
+        except AttributeError:
+            print("ERROR :", row)
+        out.nombre_madre = madre
+        return out
+    sub = nf[maybe_husb].copy(deep=True)
+    ceds_fix = set(sub.cedula)
+    removed = sub.apply(lambda row: remove_husband(row), axis=1, result_type='expand')
+
+    # third, re-parse the names and update the original frames
+    rf.loc[rf.cedula.isin(ceds_fix), 'nombre_madre'] = removed.nombre_madre
+    ceds_were_fixed = set(nf_fixed[nf_fixed.nombre.notnull()].cedula)
+    cols_fixed = ['nombre', 'prenames', 'nombre_madre', 'sur_madre', 'has_madre', 'is_mlegal', 'nlen_madre', 'n_char_nombre', 'n_char_prenames']
+    for col in cols_fixed:
+        nf.loc[nf.cedula.isin(ceds_were_fixed), col] = nf_fixed.loc[:, col]
+    return nf, rf
+    
