@@ -413,4 +413,31 @@ def fix_husband_addition(nf, rf, funky_prenames):
     for col in cols_fixed:
         nf.loc[nf.cedula.isin(ceds_were_fixed), col] = nf_fixed.loc[:, col]
     return nf, rf
+
+
+
+def merge_underscore_names(ncounts):
+    under_prenames = set(ncounts[ncounts.obsname.map(lambda x: "_" in x)].obsname)
+
+    for upre in tqdm(under_prenames):
+
+        u_rec = ncounts[ncounts.obsname == upre].iloc[0]
+
+        norm_pre = ' '.join(upre.split("_"))
+        norm_rec = ncounts[ncounts.obsname == norm_pre]
+        if len(norm_rec) == 1:
+            norm_rec = norm_rec.iloc[0]
+            ncounts.loc[ncounts.obsname == norm_pre, 'n_sur'] = u_rec.n_sur + norm_rec.n_sur - 0.5
+            ncounts.loc[ncounts.obsname == norm_pre, 'n_pre'] = u_rec.n_pre + norm_rec.n_pre - 0.5
+        elif len(norm_rec) == 0:
+            tmp = u_rec.copy(deep=True)
+            tmp.obsname = norm_pre
+            ncounts = ncounts.append(tmp)
+
+    ncounts = ncounts[~ncounts.obsname.isin(under_prenames)]
+    ncounts['sratio'] = ncounts.n_sur/ncounts.n_pre
+    ncounts['pratio'] = ncounts.n_pre/ncounts.n_sur
     
+    subspace = ncounts[ncounts.obsname.map(lambda x: " " in x)].copy(deep=True)
+    subspace['obsname'] = subspace.obsname.map(lambda x: "_".join(x.split()))
+    return pd.concat([ncounts, subspace], axis=0)
