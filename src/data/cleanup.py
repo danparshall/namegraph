@@ -126,7 +126,10 @@ def get_compound_names(folder_interim):
                'QUITO Y SACA',
               }
     dedications = {'DE LOS DOLORES', 'DE LAS MERCEDES', 'DE LA ESE', 'DE LA ROSA', 'DE LA PALOMA', 'DE LA TORRE',
-                   'DEL NINO JESUS', 'DE SANTA ANA', 'DE SAN JOSE', "DE SAN ROMAN", "DE SAN ANTONIO",
+                   'DEL NINO JESUS', 'DE SANTA ANA', 'DE SAN JOSE', "DE SAN ROMAN", "DE SAN ANTONIO", 'DE LA ASUNCION',
+                    'DE LOS ANGELES', 'DE LOS REYES', 'DE LOS MILAGROS', 'DE LA TRINIDAD', 'DE LA PAZ',
+                    'DE LA NUBE', 'DE LA NUVE', 'DE LA CARIDAD', 
+                    
                 }
     others = {"MONTES DE OCA", "ROMO LEROUX", 'SAENZ DE VITERI', "FERNANDEZ DE CORDOVA", "FLORES DE VALGAZ",
                 'DI LUCA', 'VARGAS MACHUCA', 'DIAZ GRANADOS', 'SIG TU', 'MAN GING', 'DE LA FE', "DE BERAS",

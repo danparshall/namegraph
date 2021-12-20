@@ -14,9 +14,11 @@ sys.path.append("../data")
 import cleanup
 import extract
 import parents
+import match
 reload(cleanup)
 reload(extract)
 reload(parents)
+reload(match)
 
 # %run test_dataset.py "../../data/testdata/00-test_simpsons.tsv" '../../data/testdata/interim/'
 
@@ -49,6 +51,10 @@ dtypes_namecounts= {'obsname': str, 'n_sur': float, 'n_pre': float, 'sratio': fl
 dtypes_newfreqfile = {  'cedula': str, 'nombre': str, 'sur_padre': str, 'sur_madre': str,
                         'pre1': str, 'pre2': str, 'pre3': str, 'junk': str, 'nlen': int,
                         }
+
+dtypes_padres = {'cedula': str, 'sur1': str, 'sur2': str, 'pre1': str,
+             'pre2': str, 'pre3': str, 'junk': str, 'flag': bool
+             }
 @click.command()
 @click.argument('filepath_raw', type=click.Path(exists=True))
 @click.argument('folder_interim', type=click.Path())
@@ -94,15 +100,17 @@ def main(filepath_raw, folder_interim):
     padre = names_cleaned.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_padre', wts_pre, wts_sur),
                                          axis=1, result_type='expand')
 
+    test.test_data(padre, "../../data/testdata/07-test_cases_padre.tsv", dtypes_padres)
+
     madre = names_cleaned.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_madre', wts_pre, wts_sur),
                                          axis=1, result_type='expand')
-    pos = 0
-    for i in [padre, madre, allnames]:
-        i.to_csv("../../data/testdata/interim/PADRE"+str(pos)+".tsv", sep='\t', index=False)
-        pos += 1
-
+    
+    test.test_data(madre, "../../data/testdata/08-test_cases_madre.tsv", dtypes_padres)
 
     ## BEGIN 4.0
+    ncleaned_rf = match.merge_ncleaned_rf(names_cleaned,rf)
+
+    matched_padres, matched_madres = match.exact_name(ncleaned_rf)
 
 
 
