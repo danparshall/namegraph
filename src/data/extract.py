@@ -7,6 +7,17 @@ from tqdm.auto import tqdm
 tqdm.pandas()
 
 
+"""
+NOTES:
+
+
+TODO:
+Handle "FALLECIDA EN ...." and other things when part of the "nombre" field.
+
+
+
+"""
+
 
 
 def check_nombre_doubling(nombre):
@@ -417,12 +428,15 @@ def fix_husband_addition(nf, rf, funky_prenames):
 
 
 def merge_underscore_names(ncounts):
+    """
+    Find any names which are identical (other than underscores) and correctly merge their counts.
+    """
+
     under_prenames = set(ncounts[ncounts.obsname.map(lambda x: "_" in x)].obsname)
 
     for upre in tqdm(under_prenames):
 
         u_rec = ncounts[ncounts.obsname == upre].iloc[0]
-
         norm_pre = ' '.join(upre.split("_"))
         norm_rec = ncounts[ncounts.obsname == norm_pre]
         if len(norm_rec) == 1:
