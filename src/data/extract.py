@@ -99,6 +99,7 @@ def parse_padre(row, parts, nomset, pset):
 
 
 def parse_madre(row, parts, nomset, mset):
+    madre = ""
     if row.nombre_madre:
         poss_madre = check_nombre_doubling(row.nombre_madre)
         poss_mset = set(poss_madre.split())
@@ -107,7 +108,7 @@ def parse_madre(row, parts, nomset, mset):
             and not row.nombre.endswith(poss_madre)
                 and poss_mset.issubset(nomset) and poss_mset.issubset(mset)):
             madre = poss_madre
-        elif not madre:
+        else:
             nombre_madre = row.nombre_madre
 
             if nombre_madre.startswith(parts[0]):
@@ -147,8 +148,6 @@ def parse_madre(row, parts, nomset, mset):
                     else:
                         madre = guess
                         break
-        else:
-            madre = ""
     return madre
 
 
@@ -265,8 +264,6 @@ def clean_names(rf, surnames_extracted, funky_prenames = set()):
     """ Uses extracted surnames as reference, to extract the prenames and clean them up
     
     """
-
-
     # set column order
     surnames_extracted = surnames_extracted[['cedula', 'sur_padre', 'has_padre', 'is_plegal',
                                              'sur_madre', 'has_madre', 'is_mlegal', 'prenames']]
@@ -418,7 +415,6 @@ def make_allnames(parsed):
         count_names['sratio'] = count_names.n_sur / count_names.n_pre
         count_names['pratio'] = count_names.n_pre / count_names.n_sur
         return count_names
-
     
     def is_name_multimatch(nombre):
         mdel   = re_del.search(nombre)
@@ -456,14 +452,13 @@ def fix_mixed_presur_names(nf, name_counts):
     def repair_dual_surmadre(row):
         out = {'sur_madre': "", 'prenames': ""}
         sur_madre, pre1 = row.sur_madre.split()
-
         out['prenames'] = pre1 + ' ' + row.prenames
         out['sur_madre'] = sur_madre
         return out
 
     fix_rows = nf.sur_madre.isin(needs_repair)
-    nf.loc[fix_rows, ['sur_madre', 'prenames']
-          ] = nf[fix_rows].progress_apply(lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
+    nf.loc[fix_rows, ['sur_madre', 'prenames']] = nf[fix_rows].progress_apply(
+                                                    lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
     return nf
 
 
