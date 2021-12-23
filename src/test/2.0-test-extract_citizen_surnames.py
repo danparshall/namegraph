@@ -76,7 +76,7 @@ if True:
                   'ced_spouse': str, 'ced_padre': str, 'ced_madre': str
                   }
 
-    rf = pd.read_csv(LOC_RAW + "simpsons_test_cases.tsv", sep='\t', dtype=dtypes_reg,
+    rf = pd.read_csv(LOC_RAW + "01-simpsons_test_cases.tsv", sep='\t', dtype=dtypes_reg,
                      parse_dates=['dt_birth', 'dt_death', 'dt_marriage'],
                      keep_default_na=False, na_values=nan_values,
                      nrows=N_ROWS
@@ -341,7 +341,7 @@ new_types = {'cedula': str,
              'is_mlegal': bool,
              }
 
-test_cases_surnames = pd.read_csv(LOC_RAW + "simpsons_test_cases_surname.tsv",
+test_cases_surnames = pd.read_csv(LOC_RAW + "02-simpsons_test_cases_surname.tsv",
                                   sep='\t', dtype=new_types, keep_default_na=False, na_values=nan_values)
 
 for i in range(2):
@@ -625,7 +625,7 @@ new_types = {'cedula': str,
              'nlen': int,
              }
 
-test_cases_freq = pd.read_csv(LOC_RAW + "simpsons_test_cases_freqfile.tsv",
+test_cases_freq = pd.read_csv(LOC_RAW + "05-simpsons_test_cases_newfreqfile.tsv",
                                   sep='\t', dtype=new_types, keep_default_na=False, na_values=nan_values)
 
 for i in range(2):
@@ -672,7 +672,7 @@ new_types = {'obsname': str,
              'is_multimatch': bool
              }
 
-test_cases_NCOUNTS = pd.read_csv(LOC_RAW + "simpsons_test_cases_namecounts.tsv",
+test_cases_NCOUNTS = pd.read_csv(LOC_RAW + "06-simpsons_test_cases_namecounts.tsv",
                               sep='\t', dtype=new_types, keep_default_na=False, na_values=nan_values)
 
 for i in range(2):
@@ -711,8 +711,7 @@ nf.sur_padre.isin(surs_solo_rare).sum()   # 101k (out of 20M), so 0.5%
 dual_sur = count_names[(count_names.nlen == 2) & ~count_names.is_multimatch]
 dual_sur = dual_sur.apply(lambda x: x.obsname.split(),
                           axis=1, result_type='expand')
-column = ['probably_sur', 'probably_pre']
-dual_sur = pd.DataFrame(columns=column)
+dual_sur.columns = ['probably_sur', 'probably_pre']
 
 dual_sur = dual_sur.merge(count_names[['obsname', 'sratio']],
                           left_on='probably_sur', right_on='obsname').drop(columns=['obsname'])
@@ -869,7 +868,7 @@ new_types = {'cedula': str, 'nombre': str, 'prenames': str, 'gender': str,
              'n_char_prename':int, 'maybe_husb': bool
              }
 
-test_cases_NCLEANED = pd.read_csv(LOC_RAW + "simpsons_test_cases_names_cleaned.tsv",
+test_cases_NCLEANED = pd.read_csv(LOC_RAW + "03-simpsons_test_cases_names_cleaned.tsv",
                                  sep='\t', dtype=new_types, keep_default_na=False, na_values=nan_values)
 
 for i in range(2):
@@ -931,7 +930,7 @@ print("# allnames :", len(allnames))
 # 15 mins
 
 """
-Test names_cleaned
+Test allnames
 """
 new_types = {'obsname': str,
              'n_sur': float,
@@ -941,7 +940,7 @@ new_types = {'obsname': str,
              'nlen': float,
              'is_multimatch': bool
              }
-test_cases_ALLNAMES = pd.read_csv(LOC_RAW + "simpsons_test_cases_allnames.tsv",
+test_cases_ALLNAMES = pd.read_csv(LOC_RAW + "04-simpsons_test_cases_allnames.tsv",
                                   sep='\t', dtype=new_types, keep_default_na=False, na_values=nan_values)
 
 for i in range(2):

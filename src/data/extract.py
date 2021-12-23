@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import re
 
 
@@ -98,6 +99,7 @@ def parse_padre(row, parts, nomset, pset):
 
 
 def parse_madre(row, parts, nomset, mset):
+    madre = ""
     if row.nombre_madre:
         poss_madre = check_nombre_doubling(row.nombre_madre)
         poss_mset = set(poss_madre.split())
@@ -106,7 +108,7 @@ def parse_madre(row, parts, nomset, mset):
             and not row.nombre.endswith(poss_madre)
                 and poss_mset.issubset(nomset) and poss_mset.issubset(mset)):
             madre = poss_madre
-        elif not madre:
+        else:
             nombre_madre = row.nombre_madre
 
             if nombre_madre.startswith(parts[0]):
@@ -146,8 +148,6 @@ def parse_madre(row, parts, nomset, mset):
                     else:
                         madre = guess
                         break
-        else:
-            madre = ""
     return madre
 
 
@@ -264,8 +264,6 @@ def clean_names(rf, surnames_extracted, funky_prenames = set()):
     """ Uses extracted surnames as reference, to extract the prenames and clean them up
     
     """
-
-
     # set column order
     surnames_extracted = surnames_extracted[['cedula', 'sur_padre', 'has_padre', 'is_plegal',
                                              'sur_madre', 'has_madre', 'is_mlegal', 'prenames']]
@@ -291,7 +289,7 @@ def clean_names(rf, surnames_extracted, funky_prenames = set()):
     funky_prenames = list(funky_prenames)
     funky_prenames.sort(reverse=True, key=len)
     print("# funkies :", len(funky_prenames))
-    nf.loc[nf.is_funky, 'prenames'] = nf[nf.is_funky].prenames.progress_map(lambda x: fix_funk(x, funky_prenames))
+    nf.loc[nf.is_funky, 'prenames'] = nf.loc[nf.is_funky, 'prenames'].progress_map(lambda x: fix_funk(x, funky_prenames))
 
     # now that there are only a few hundred funkies (most are handled in data-cleaning), this is faster by 100x
     nf['nlen_padre'] = nf.nombre_padre.map(lambda x: len(x.split()))
@@ -366,6 +364,79 @@ def fix_funk(nombre, funks):
 
 
 
+def parse_prenames(nf):
+    """ Parse the prenames column, to return dataframe with the fully-extracted names of each citizen.
+    
+    
+    """
+    def parse_prename_row(prenames):
+        """ The surnames are parsed, but the prenames must be split up.  
+        This is possible once the multi-part prenames have been given underscores 
+        """
+        out = {'pre1':"", 'pre2':"", 'pre3':"", 'junk':""}
+        # now assign name pices
+        pres = prenames.split()
+        if len(pres) >= 1:
+            out['pre1'] = pres[0]
+        if len(pres) >= 2:
+            out['pre2'] = pres[1]
+        if len(pres) >= 3:
+            out['pre3'] = pres[2]
+        if len(pres) >= 4:
+            out['junk'] = ' '.join(pres[3:])
+        return out
+    
+    # apply the parsing function to each row; merge with surnames
+    parsed = pd.concat([nf[['cedula', 'sur_padre', 'sur_madre']], 
+                     nf.progress_apply(lambda row: parse_prename_row(row.prenames), axis=1, result_type='expand')], axis=1)
+
+    # counts number of components in name (e.g. n_surs + n_pres)
+    parsed['nlen'] = parsed[['sur_padre','sur_madre','pre1','pre2','pre3','junk']
+                           ].replace("", np.nan).notnull().astype(int).sum(axis=1)
+    return parsed
+
+
+
+def make_allnames(parsed):
+    """ Produce relative counts of all names (i.e. number of times appearing as surname vs prename)
+    
+    """
+    def count_all_names(parsed):
+        tmp = pd.concat([parsed.sur_padre, parsed.sur_madre], axis=0).value_counts()
+        count_sur = pd.DataFrame({'obsname':tmp.index, 'n_sur':tmp.values})
+        tmp = pd.concat([parsed.pre1, parsed.pre2], axis=0).value_counts()
+        count_pre = pd.DataFrame({'obsname':tmp.index, 'n_pre':tmp.values})
+        count_names = count_sur.merge(count_pre, on='obsname', how='outer')
+        count_names.fillna(0, inplace=True)
+        
+        count_names.loc[count_names.obsname == "", ['n_sur','n_pre']] = 0 # make sure null names get weight factor of 1
+        count_names['n_sur'] = count_names.n_sur + 0.5
+        count_names['n_pre'] = count_names.n_pre + 0.5
+        count_names['sratio'] = count_names.n_sur / count_names.n_pre
+        count_names['pratio'] = count_names.n_pre / count_names.n_sur
+        return count_names
+    
+    def is_name_multimatch(nombre):
+        mdel   = re_del.search(nombre)
+        msant  = re_sant.search(nombre)
+        mlaos  = re_laos.search(nombre)
+        mdela  = re_dela.search(nombre)
+        mde  = re_de.search(nombre)
+        mvon   = re_von.search(nombre)
+        mvande = re_vande.search(nombre)
+
+        if mdel or msant or mlaos or mdela or mde or mvon or mvande:
+            return True
+        else:
+            return False
+        
+    name_counts = count_all_names(parsed)
+    name_counts['nlen'] = name_counts.obsname.map(lambda x: len(x.split()))
+    name_counts['is_multimatch'] = name_counts.obsname.map(is_name_multimatch)
+    return name_counts
+
+
+
 def fix_mixed_presur_names(nf, name_counts):
     dual_sur = name_counts[(name_counts.nlen == 2) & ~name_counts.is_multimatch]
     dual_sur = dual_sur.apply(lambda x: x.obsname.split(), axis=1, result_type='expand')
@@ -381,20 +452,18 @@ def fix_mixed_presur_names(nf, name_counts):
     def repair_dual_surmadre(row):
         out = {'sur_madre': "", 'prenames': ""}
         sur_madre, pre1 = row.sur_madre.split()
-
         out['prenames'] = pre1 + ' ' + row.prenames
         out['sur_madre'] = sur_madre
         return out
 
     fix_rows = nf.sur_madre.isin(needs_repair)
-    nf.loc[fix_rows, ['sur_madre', 'prenames']
-          ] = nf[fix_rows].progress_apply(lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
+    nf.loc[fix_rows, ['sur_madre', 'prenames']] = nf[fix_rows].progress_apply(
+                                                    lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
     return nf
 
 
 
 def fix_husband_addition(nf, rf, funky_prenames):
-
     # first, identify likely cases where a mother is listed with the husband's surname as an honorific
     # 60 minutes  (this is a check of the mother's name, so have to run it for everyone; spouse would be only women)
     # NOTE: need to fix cases which show up as "sur_madre" == "DE".
@@ -414,11 +483,14 @@ def fix_husband_addition(nf, rf, funky_prenames):
         out.nombre_madre = madre
         return out
     sub = nf[maybe_husb].copy(deep=True)
-    ceds_fix = set(sub.cedula)
-    removed = sub.apply(lambda row: remove_husband(row), axis=1, result_type='expand')
+    ceds_to_fix = set(sub.cedula)
+    rf_removed = sub.apply(lambda row: remove_husband(row), axis=1, result_type='expand')
 
     # third, re-parse the names and update the original frames
-    rf.loc[rf.cedula.isin(ceds_fix), 'nombre_madre'] = removed.nombre_madre
+    rf.loc[rf.cedula.isin(ceds_to_fix), 'nombre_madre'] = rf_removed.nombre_madre
+    surnames_fixed = rf_removed.apply(lambda row: parse_fullrow(row), axis=1, result_type='expand')
+    nf_fixed, funky_prenames = clean_names(rf_removed, surnames_fixed)
+
     ceds_were_fixed = set(nf_fixed[nf_fixed.nombre.notnull()].cedula)
     cols_fixed = ['nombre', 'prenames', 'nombre_madre', 'sur_madre', 'has_madre', 'is_mlegal', 'nlen_madre', 'n_char_nombre', 'n_char_prenames']
     for col in cols_fixed:

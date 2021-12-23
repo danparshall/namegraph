@@ -6,4 +6,7 @@ cedula	sur_padre	sur_madre	prenames	has_padre	is_plegal	has_madre	is_mlegal
 5	SIMPSON	BOUVIER	MARGARET EVELYN	True	True	True	True
 6	RODRIGUEZ	DEL_NINO_JESUS	JUAN CARLOS	True	True	True	True
 7	MORALES	RUIZ	JUANITA	True	True	True	True
-8	RODRIGUEZ	MORALES	CAMILA	True	False	True	True
+8	RODRIGUEZ	MORALES	CAMILO DE LOS SANTOS	True	False	True	True
+9	MARTINEZ	GONZALES	JULIAN	True	True	True	True
+10	DE_LA_CUEVA	ESPITIA	MARIA JOSE	True	True	True	True
+11	MARTINEZ	DE_LA_CUEVA	MARIA JULIETA	True	True	True	True

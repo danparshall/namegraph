@@ -1,0 +1,12 @@
+cedula	sur1	sur2	pre1	pre2	pre3	junk	flag
+1	SIMPSON		ABE				False
+2	BOUVIER		CLANCY				False
+3	SIMPSON		HOMER				False
+4	SIMPSON		HOMER				False
+5	SIMPSON		HOMER	JAY			False
+6	RODRIGUEZ		ROBERTO				False
+7	MORALES		SANTIAGO				False
+8	RODRIGUEZ		JUAN				False
+9	MARTINEZ		ROBERTO				False
+10	DE_LA_CUEVA		EDUARDO				False
+11	MARTINEZ		JULIAN				False

@@ -23,3 +23,23 @@ def test_data(org_data, test_data_path, dtypes, date_col=None):
             print(row['cedula'], ": FAILED")
             print(row)
             print(res)
+
+
+def test_names(org_data, test_data_path, dtypes, date_col=None):
+    test = pd.read_csv(test_data_path, sep='\t', parse_dates=date_col,
+                       dtype=dtypes, keep_default_na=False, na_values=nan_values)
+    print("Test", test_data_path)
+
+    for row in test.to_dict(orient='records'):
+        try:
+            res = org_data[org_data.obsname ==
+                            row['obsname']].iloc[0].to_dict()
+        except IndexError:
+            print(row['obsname'], ": NOT IN THIS SUBFRAME")
+            continue
+        if res == row:
+            print(row['obsname'], ": OK")
+        else:
+            print(row['obsname'], ": FAILED")
+            print(row)
+            print(res)
