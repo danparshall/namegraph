@@ -463,7 +463,6 @@ def fix_mixed_presur_names(nf, name_counts):
 
 
 
-
 def fix_husband_addition(nf, rf, funky_prenames):
     # first, identify likely cases where a mother is listed with the husband's surname as an honorific
     # 60 minutes  (this is a check of the mother's name, so have to run it for everyone; spouse would be only women)
@@ -491,7 +490,7 @@ def fix_husband_addition(nf, rf, funky_prenames):
     rf.loc[rf.cedula.isin(ceds_to_fix), 'nombre_madre'] = rf_removed.nombre_madre
     surnames_fixed = rf_removed.apply(lambda row: parse_fullrow(row), axis=1, result_type='expand')
     nf_fixed, funky_prenames = clean_names(rf_removed, surnames_fixed)
-    
+
     ceds_were_fixed = set(nf_fixed[nf_fixed.nombre.notnull()].cedula)
     cols_fixed = ['nombre', 'prenames', 'nombre_madre', 'sur_madre', 'has_madre', 'is_mlegal', 'nlen_madre', 'n_char_nombre', 'n_char_prenames']
     for col in cols_fixed:
