@@ -74,41 +74,57 @@ def main(filepath_raw, folder_interim):
 
     test.test_data(rf, '../../data/testdata/01-simpsons_test_cases.tsv', dtypes_namedata, date_cols)
 
+    print("RF :", len(rf))
+    print(rf.head())
+
     ## BEGIN NB 2.0
     print("Parsing rows to extract surnames")
-    surnames_extracted = rf.progress_apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
+
+    #    names_cleaned, allnames = extract.allnames_nf_manipulation(rf, surnames_extracted)
+    surnames_extracted = rf.apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
+
+    print("surnames :", len(surnames_extracted))
+    print(surnames_extracted.head())
+
+    nf, funky_prenames = extract.clean_names(rf, surnames_extracted)
+
+    print("len(NF):", len(nf))
+    print(nf.head())
+    # initial extraction
+    parsed = extract.parse_prenames(nf)
+    name_counts = extract.make_allnames(parsed)
+
+    # now do some cleaning
+    nf = extract.fix_mixed_presur_names(nf, name_counts)
+    nf, rf = extract.fix_husband_addition(nf, rf, funky_prenames)
+
+    # now re-parse the cleaned data
+    parsed = extract.parse_prenames(nf)
+    name_counts = extract.make_allnames(parsed)
+    allnames = extract.merge_underscore_names(name_counts)
+
 
     test.test_data(surnames_extracted, '../../data/testdata/02-simpsons_test_cases_surname.tsv', dtypes_surname)
-
-    names_cleaned, allnames = extract.allnames_nf_manipulation(
-        rf, surnames_extracted)
-
-    test.test_data(names_cleaned, "../../data/testdata/03-simpsons_test_cases_names_cleaned.tsv", dtypes_cleaned)
+    test.test_data(parsed, "../../data/testdata/03-simpsons_test_cases_names_cleaned.tsv", dtypes_cleaned)
     test.test_names(allnames, "../../data/testdata/04-simpsons_test_cases_allnames.tsv", dtypes_allnames)
-
-    newfreqfile = extract.freqfile(names_cleaned)
-
-    test.test_data(newfreqfile, "../../data/testdata/05-simpsons_test_cases_newfreqfile.tsv", dtypes_newfreqfile)
-
-    namecounts = extract.namecounts(newfreqfile)
-    
-    test.test_names(namecounts, "../../data/testdata/06-simpsons_test_cases_namecounts.tsv", dtypes_newfreqfile)
+    test.test_data(parsed, "../../data/testdata/05-simpsons_test_cases_newfreqfile.tsv", dtypes_newfreqfile)
+    test.test_names(name_counts, "../../data/testdata/06-simpsons_test_cases_namecounts.tsv", dtypes_newfreqfile)
     
     ## BEGIN NB 3.0
     wts_pre, wts_sur = parents.wts(allnames)
 
-    padre = names_cleaned.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_padre', wts_pre, wts_sur),
+    padre = nf.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_padre', wts_pre, wts_sur),
                                          axis=1, result_type='expand')
 
     test.test_data(padre, "../../data/testdata/07-test_cases_padre.tsv", dtypes_padres)
 
-    madre = names_cleaned.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_madre', wts_pre, wts_sur),
+    madre = nf.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_madre', wts_pre, wts_sur),
                                          axis=1, result_type='expand')
     
     test.test_data(madre, "../../data/testdata/08-test_cases_madre.tsv", dtypes_padres)
 
     ## BEGIN 4.0
-    ncleaned_rf = match.merge_ncleaned_rf(names_cleaned,rf)
+    ncleaned_rf = match.merge_ncleaned_rf(nf,rf)
 
     matched_padres, matched_madres = match.exact_name(ncleaned_rf)
 
