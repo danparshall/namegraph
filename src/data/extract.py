@@ -24,7 +24,8 @@ Handle "FALLECIDA EN ...." and other things when part of the "nombre" field.
 def check_nombre_doubling(nombre):
     """ Checks name for possible repeats.  Extracts surname if doubled (which would be for both parents).
 
-    It's entirely possible for someone to be named "GARCIA GARCIA JOSE JULIO", or "DE LA CUEVA DE LA CUEVA JOSE JULIO".
+    It's entirely possible for someone to be named "JOSE JULIO GARCIA GARCIA", or "DE LA CUEVA DE LA CUEVA JOSE JULIO".
+    This function looks for repeated tokens at the beginning or end of a string, and assumes that they correspond to surnames.
     """
     tokens = nombre.split()
     n_tokens = len(tokens)
@@ -36,12 +37,13 @@ def check_nombre_doubling(nombre):
         surname = ""
         for i in range(1, round((n_tokens-1)/2)):
             # note that we have to check both for single-token and multi-token surnames
+            # indexing goes for i, then 2i, to look first for "GARCIA GARCIA", then "DA VINCI DA VINCI", etc
             if tokens[:i] == tokens[i: 2*i]:
-                # legal form
+                # legal form, start at the beginning of the string
                 surname = ' '.join(tokens[:i])
                 break
             elif tokens[-i:] == tokens[-2*i:-i]:
-                # sequential form
+                # social form, start at end of string and work backwards
                 surname = ' '.join(tokens[-i:])
                 break
     return surname
