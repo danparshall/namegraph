@@ -53,7 +53,7 @@ def check_nombre_doubling(nombre):
 def get_substrings(nombre, START=0):
     """ Generator returning successively shorter contiguous subsets of tokens.
 
-    Given a list of tokens [X, Y, Z], this function returns:
+    Given a string consisting of tokens 'X Y Z', this function returns:
         'X Y Z',
         'X Y',
         'Y Z',
