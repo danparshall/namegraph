@@ -419,9 +419,10 @@ def regex_funky_prenames(prenames, funky_prenames):
     if poss_funks:
         for funk in poss_funks:
             funky_prenames.add(funk)
-        return True
+        is_funky = True
     else:
-        return False
+        is_funky = False
+    return is_funky
 
 
 
@@ -525,6 +526,10 @@ def make_allnames(parsed):
 
 
 def fix_mixed_presur_names(nf, name_counts):
+    """ Fix cases where what appears to be multi-token surname is actually a surname + prename.
+    
+    """
+    EVIDENCE_TO_FLIP = 1000  # how strongly we need to believe that we've mis-parsed the name; found by eyeballing, should be updated
     dual_sur = name_counts[(name_counts.nlen == 2) & ~name_counts.is_multimatch]
     dual_sur = dual_sur.apply(lambda x: x.obsname.split(), axis=1, result_type='expand')
     dual_sur.columns = ['probably_sur', 'probably_pre']
@@ -532,7 +537,7 @@ def fix_mixed_presur_names(nf, name_counts):
     dual_sur = dual_sur.merge(name_counts[['obsname', 'pratio']], left_on='probably_pre', right_on='obsname').drop(columns=['obsname'])
     dual_sur['evidence'] = dual_sur.sratio * dual_sur.pratio
 
-    needs_repair = dual_sur[dual_sur.evidence > 1000]
+    needs_repair = dual_sur[dual_sur.evidence > EVIDENCE_TO_FLIP]
     needs_repair = set(needs_repair.probably_sur + ' ' + needs_repair.probably_pre)
 
     print("Repairing {} mixed pre/sur records".format(len(needs_repair)))
@@ -550,11 +555,18 @@ def fix_mixed_presur_names(nf, name_counts):
 
 
 
-def fix_husband_addition(nf, rf, funky_prenames):
+def fix_husband_honorific(nf, rf, funky_prenames):
+    """ Repairs cases when mother's field includes husband's surname as an honorific.
+    
+    TODO: include fix for when the citizen is a woman using both her surname, and her
+    husband's surname as an honorific (this shouldn't be recorded, but sometimes is)
+
+    TODO: need to fix cases which show up as "sur_madre" == "DE".  These are almost all 
+    when a woman and her mother both use husband's honorific, so algo picks it up as
+    mother's surname
+    """
     # first, identify likely cases where a mother is listed with the husband's surname as an honorific
     # 60 minutes  (this is a check of the mother's name, so have to run it for everyone; spouse would be only women)
-    # NOTE: need to fix cases which show up as "sur_madre" == "DE".
-    # these are almost all when a woman and her mother both use husband's honorific, so algo picks it up as mother's surname
     def poss_husb(row):
         # tried both simple search and regex; no difference in speed
         return " DE " + row.sur_padre in row.nombre_madre
@@ -587,8 +599,8 @@ def fix_husband_addition(nf, rf, funky_prenames):
 
 
 def merge_underscore_names(ncounts):
-    """
-    Find any names which are identical (other than underscores) and correctly merge their counts.
+    """ Find any names which are identical (other than underscores) and correctly merge their counts.
+
     """
 
     under_prenames = set(ncounts[ncounts.obsname.map(lambda x: "_" in x)].obsname)
