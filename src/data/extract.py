@@ -78,8 +78,17 @@ def get_substrings(nombre, START=0):
 
 
 def parse_padre(row, parts, nomset, pset):
-    """ 
+    """ Identifies surname of father by comparing the 'nombre' and 'nombre_padre' fields within a given row.
     
+    Args:
+        row: row of the reg dataframe, containing both the 'nombre' and 'nombre_padre' columns
+        parts: list of tokens from the nombre field
+        nomset: set of tokens from the nombre field
+        pset: set of tokens from the nombre_padre field
+
+    Returns:
+        padre: surname of father
+        parts: list of tokens from the nombre field, after removing those for the father's surname
     """
     # start by trying the first LEN-1 tokens as a single name, then LEN-2 tokens, etc
     # this matches longest chunk found, so it should pick up compound names like DE LA CUEVA
