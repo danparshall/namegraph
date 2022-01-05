@@ -236,10 +236,19 @@ re_de_pre_UNDERSCORE = re.compile(r"(^.*)\s(DEL?_\w+.*$)")
 def parse_fullrow(row):
     """ Identifies surnames of citizen, by comparing to 'nombre_padre' and 'nombre_madre'
 
+    The core insight is that the citizen's name is always written in legal form, so we
+    can be sure that the first token(s) in the citizen's name match up to the father.
+    Once we've identified the father's surname, we remove it from the string, and we
+    now know that the new first token(s) correspond to the mother's surname.
 
-    This function can handle multi-token names which don't include underscores
-
+    This function can handle multi-token names which don't include underscores.
     TODO: Use better exception handling.
+
+    Args:
+        row: row of the reg dataframe, containing the 'nombre', 'nombre_padre', and 'nombre_madre' columns
+
+    Returns:
+        out: a dict with the decomposed surnames and prenames (to be used as row of the names dataframe)
     """
     out = {"cedula": row.cedula, 
             "sur_padre": "", "sur_madre": "", "prenames": "",
@@ -316,11 +325,20 @@ re_laos = re.compile(u"(\s|^)(L[AEO]S? \w{2,})(\s|$)")
 re_del  = re.compile(u"(\s|^)(DEL \w{2,})(\s|$)")
 re_de   = re.compile(u"(\s|^)(DE \w{2,})(\s|$)")
 
-
-def clean_names(rf, surnames_extracted, funky_prenames = set()):
+def clean_names(rf, surnames_extracted, funky_prenames = list()):
     """ Uses extracted surnames as reference, to extract the prenames and clean them up.
     
+    Args:
+        rf: the registration dataframe
+        surnames_extracted : surname dataframe created from "parse_fullrow"
+        funky_prenames : list of currently-identified multi-token prenames (modified as the function runs)
+
+    Returns:
+        nf : the "names" dataframe, containing the extracted surnames and cleaned prenames
+        funky_prenames : updated list of multi-token prenames
+
     """
+
     # set column order
     surnames_extracted = surnames_extracted[['cedula', 'sur_padre', 'has_padre', 'is_plegal',
                                              'sur_madre', 'has_madre', 'is_mlegal', 'prenames']]
@@ -342,8 +360,9 @@ def clean_names(rf, surnames_extracted, funky_prenames = set()):
              'nombre_madre','sur_madre','has_madre', 'is_mlegal']]
 
     # "funky_prenames" gets modified as a side-effect
+    funky_prenames = set(funky_prenames)   # used as set within this function, but length-sorted list externally
     nf['is_funky'] = nf.prenames.map(lambda x: regex_funky_prenames(x, funky_prenames))
-    funky_prenames = list(funky_prenames)
+    funky_prenames = list(funky_prenames)  # return to a list
     funky_prenames.sort(reverse=True, key=len)
     print("# funkies :", len(funky_prenames))
     nf.loc[nf.is_funky, 'prenames'] = nf.loc[nf.is_funky, 'prenames'].progress_map(lambda x: fix_funk(x, funky_prenames))
@@ -357,19 +376,26 @@ def clean_names(rf, surnames_extracted, funky_prenames = set()):
 
 
 
-def regex_funky_prenames(nombre, funky_prenames):
+def regex_funky_prenames(prenames, funky_prenames):
     """ Uses a series of regexes to identify prenames which are potentially unusual.
     
-    This is a little slow (~4mins / million rows), but pretty thorough.
+    Args:
+        prenames : string containing the prenames (ie. nombre after the surnames have been removed)
+        funky_prenames : set with currently-identified multi-token names.  More names can be added within this function
+
+    Returns:
+        is_funky : boolean indicating if the prename had a multi-token component
     NOTE: adds to "funky_prenames" as a side-effect
+
+    This is a little slow (~4mins / million rows), but pretty thorough.
     """
-    mdel   = re_del.search(nombre)
-    msant  = re_sant.search(nombre)
-    mlaos  = re_laos.search(nombre)
-    mdela  = re_dela.search(nombre)
-    mvon   = re_von.search(nombre)
-    mvande = re_vande.search(nombre)
-    mde    = re_de.search(nombre)
+    mdel   = re_del.search(prenames)
+    msant  = re_sant.search(prenames)
+    mlaos  = re_laos.search(prenames)
+    mdela  = re_dela.search(prenames)
+    mvon   = re_von.search(prenames)
+    mvande = re_vande.search(prenames)
+    mde    = re_de.search(prenames)
     poss_funks = set()
     if mdel:
         poss_funks.add(mdel.group(2))
@@ -399,27 +425,29 @@ def regex_funky_prenames(nombre, funky_prenames):
 
 
 
-def fix_funk(nombre, funks):
-    """ The 'funks' list should be sorted in descending length, to prevent substrings from being clobbered.
+def fix_funk(prenames, funky_prenames):
+    """ Fixes multi-token names by replacing the spaces with underscores.
+    
+    The 'funky_prenames' list should be sorted in descending length, to prevent substrings from being clobbered.
     
     NB: there's a potential bug in here, bc the list is sorted according to character length, but checks
     here are being done according to number of tokens.  But very unlikely to cause an issue, so ignoring for now
     """
-    nlen = len(nombre.split())
+    nlen = len(prenames.split())
     if nlen <= 2:
-        return nombre
+        return prenames
     
-    for funk in funks:
+    for funk in funky_prenames:
         flen = len(funk.split())
         if (nlen > flen):
-            if (funk in nombre):
+            if (funk in prenames):
                 defunk = '_'.join(funk.split())
-                nombre = defunk.join(nombre.split(funk))
-                nlen = len(nombre.split())
+                prenames = defunk.join(prenames.split(funk))
+                nlen = len(prenames.split())
         else:
             # since the list is sorted, once we have a match that uses all the tokens, just skip ahead
             continue
-    return nombre
+    return prenames
 
 
 
