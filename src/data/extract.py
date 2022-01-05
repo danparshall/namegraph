@@ -126,6 +126,17 @@ def parse_padre(row, parts, nomset, pset):
 
 
 def parse_madre(row, parts, nomset, mset):
+    """ Identifies surname of mother by comparing the 'nombre' and 'nombre_madre' fields within a given row.
+    
+    Args:
+        row: row of the reg dataframe, containing both the 'nombre' and 'nombre_madre' columns
+        parts: list of tokens from the nombre field, after removing father's surname
+        nomset: set of tokens from the nombre field
+        mset: set of tokens from the nombre_madre field
+
+    Returns:
+        madre: surname of mother
+    """
     madre = ""
     if row.nombre_madre:
         poss_madre = check_nombre_doubling(row.nombre_madre)
