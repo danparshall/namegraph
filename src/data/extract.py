@@ -22,7 +22,7 @@ Handle "FALLECIDA EN ...." and other things when part of the "nombre" field.
 
 
 def check_nombre_doubling(nombre):
-    """ Checks name for possible repeats.  Extracts surname if doubled (which would be for both parents).
+    """ Checks name for possible repeats, extracts surname if doubled (which would be for both parents).
 
     It's entirely possible for someone to be named "JOSE JULIO GARCIA GARCIA", or "DE LA CUEVA DE LA CUEVA JOSE JULIO".
     This function looks for repeated tokens at the beginning or end of a string, and assumes that they correspond to surnames.
@@ -50,15 +50,27 @@ def check_nombre_doubling(nombre):
 
 
 
-def get_substrings(nombre, START=0):
-    nlen = len(nombre)
+def get_substrings(tokens, START=0):
+    """ Generator returning successively shorter contiguous subsets of tokens.
+
+    Given a list of tokens [X, Y, Z], this function returns:
+        'X Y Z',
+        'X Y',
+        'Y Z',
+        'X',
+        'Y',
+        'Z'
+
+    NB: single-token substrings of length 2 or less (e.g., "A", "DE", etc) are not returned    
+    """
+    nlen = len(tokens)
     n_max = nlen - START
     for chunk_len in range(n_max, 0, -1):
         n_subs = n_max - chunk_len + 1
         for ind in range(0, n_subs):
-            sub = ' '.join(nombre[START+ind: ind+chunk_len])
+            sub = ' '.join(tokens[START+ind: ind+chunk_len])
 
-            # only return a single-token substring if the length is at least 2 (avoids matching on "DE", etc)
+            # only return a single-token substring if the length is at least 3 (avoids matching on "DE", etc)
             if (chunk_len > 1) or (len(sub) > 2):
                 yield sub
 
