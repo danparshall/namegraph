@@ -115,9 +115,8 @@ def parse_padre(row, parts, nomset, pset):
                     and poss_pset.issubset(nomset)
                     and poss_pset.issubset(pset)
                     ):
-                    # update before checking mother's name
                     padre = guess
-                    parts = row.nombre.split(padre, maxsplit=1)[1].split()
+                    parts = row.nombre.split(padre, maxsplit=1)[1].split()  # update before checking mother's name
                     break
     else:
         padre = ""
