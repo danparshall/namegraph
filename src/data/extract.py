@@ -135,6 +135,12 @@ def parse_madre(row, parts, nomset, mset):
 
     Returns:
         madre: surname of mother
+
+    NOTE: when mother's name is in short legal form (such as "LOPEZ MARIA"), and daughter 
+    shares mother's prename (such as "GARCIA LOPEZ MARIA JUANA"), then this function will
+    interpret the mother's combined name as the mother's surname (i.e., "LOPEZ MARIA").
+    Not sure there's a good solution to handle this while also robustly handling multi-token
+    surnames such as "DE LA CUEVA".
     """
     madre = ""
     if row.nombre_madre:
@@ -158,8 +164,7 @@ def parse_madre(row, parts, nomset, mset):
                     ' '.join(parts[1:]))
                 if m_de_pre_nombre:
                     # keep 'parts' as a list
-                    parts = parts[:1] + \
-                        m_de_pre_nombre.group(1).split()
+                    parts = parts[:1] + m_de_pre_nombre.group(1).split()
 
                 # names without underscores
                 mom_parts = nombre_madre.split()
@@ -175,7 +180,9 @@ def parse_madre(row, parts, nomset, mset):
                 poss_mset = set(guess.split())
                 if ((guess in nombre_madre)
                     and not row.nombre.endswith(guess)
-                        and poss_mset.issubset(nomset) and poss_mset.issubset(mset)):
+                        and poss_mset.issubset(nomset) and poss_mset.issubset(mset)
+                        # NOTE: possibly check here to make sure nombre_madre isn't identical to 'guess'; may resolve the mother/daughter overlap issue
+                        ):
                     # now check which is the better fit
                     if (guess == nombre_madre):
                         # when madre is in short legal form and daughter has the same prename1
@@ -190,6 +197,14 @@ def parse_madre(row, parts, nomset, mset):
 
 
 def parse_overlaps(row, nomset, pset, mset):
+    """ Handles special case when tokens in 'nombre_padre' and 'nombre_madre' overlap.
+
+    NOTE: when mother's name is in short legal form (such as "LOPEZ MARIA"), and daughter 
+    shares mother's prename (such as "GARCIA LOPEZ MARIA JUANA"), then this function will
+    interpret the mother's combined name as the mother's surname (i.e., "LOPEZ MARIA").
+    Not sure there's a good solution to handle this while also robustly handling multi-token
+    surnames such as "DE LA CUEVA".
+    """
     surname = check_nombre_doubling(row.nombre)
     if surname != "":
         madre = surname
