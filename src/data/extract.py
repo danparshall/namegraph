@@ -50,7 +50,7 @@ def check_nombre_doubling(nombre):
 
 
 
-def get_substrings(tokens, START=0):
+def get_substrings(nombre, START=0):
     """ Generator returning successively shorter contiguous subsets of tokens.
 
     Given a list of tokens [X, Y, Z], this function returns:
@@ -63,6 +63,7 @@ def get_substrings(tokens, START=0):
 
     NB: single-token substrings of length 2 or less (e.g., "A", "DE", etc) are not returned    
     """
+    tokens = nombre.split()
     nlen = len(tokens)
     n_max = nlen - START
     for chunk_len in range(n_max, 0, -1):
@@ -77,6 +78,9 @@ def get_substrings(tokens, START=0):
 
 
 def parse_padre(row, parts, nomset, pset):
+    """ 
+    
+    """
     # start by trying the first LEN-1 tokens as a single name, then LEN-2 tokens, etc
     # this matches longest chunk found, so it should pick up compound names like DE LA CUEVA
     if row.nombre_padre:
@@ -174,7 +178,7 @@ def parse_overlaps(row, nomset, pset, mset):
     else:
         padre = ""
         madre = ""
-        for guess in get_substrings(row.nombre_madre.split()):
+        for guess in get_substrings(row.nombre_madre):
             if (guess in row.nombre
                 and not row.nombre.endswith(guess)
                ):
