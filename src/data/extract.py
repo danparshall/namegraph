@@ -234,8 +234,13 @@ def parse_overlaps(row, nomset, pset, mset):
 re_de_pre = re.compile(r"(^.*)\s(DEL?\s\w+.*$)")
 re_de_pre_UNDERSCORE = re.compile(r"(^.*)\s(DEL?_\w+.*$)")
 def parse_fullrow(row):
-    # this function expects multi-token names to be handled already with underscores
+    """ Identifies surnames of citizen, by comparing to 'nombre_padre' and 'nombre_madre'
 
+
+    This function can handle multi-token names which don't include underscores
+
+    TODO: Use better exception handling.
+    """
     out = {"cedula": row.cedula, 
             "sur_padre": "", "sur_madre": "", "prenames": "",
             "has_padre": False, "is_plegal": False,
@@ -244,13 +249,13 @@ def parse_fullrow(row):
     if not row.nombre_padre and not row.nombre_madre:
         return out
 
-    # check if madre/padre have overlapping tokens (requires special handling)
     nomset = set(row.nombre.split())
     mset = set(row.nombre_madre.split())
     pset = set(row.nombre_padre.split())
+
+    # check if madre/padre have overlapping tokens (requires special handling)
     both = pset & mset
     flag_overlap = len(both) > 0
-
     if flag_overlap:
         padre, madre = parse_overlaps(row, nomset, pset, mset)
     else:
@@ -265,7 +270,7 @@ def parse_fullrow(row):
         try:
             padre, parts = parse_padre(row, parts, nomset, pset)
         except:
-            out['sur_padre'] = "WTF PADRE PROBLEM"
+            out['sur_padre'] = "HAS PADRE PROBLEM"
             return out
 
         #### MOTHERS NAME ####
@@ -273,7 +278,7 @@ def parse_fullrow(row):
         try:
             madre = parse_madre(row, parts, nomset, mset)
         except:
-            out['sur_madre'] = "WTF MADRE PROBLEM"
+            out['sur_madre'] = "HAS MADRE PROBLEM"
             return out
 
     # get prenames explicitly, as remainder after removing prenames.
@@ -283,7 +288,7 @@ def parse_fullrow(row):
         prenames = ''.join([x.strip()
                            for x in row.nombre.split(deduced_surnames)])
     else:
-        prenames = "WTF SURNAME PROBLEM"
+        prenames = "HAS SURNAME PROBLEM"
 
     if padre:
         out['has_padre'] = True
@@ -313,7 +318,7 @@ re_de   = re.compile(u"(\s|^)(DE \w{2,})(\s|$)")
 
 
 def clean_names(rf, surnames_extracted, funky_prenames = set()):
-    """ Uses extracted surnames as reference, to extract the prenames and clean them up
+    """ Uses extracted surnames as reference, to extract the prenames and clean them up.
     
     """
     # set column order
@@ -353,8 +358,10 @@ def clean_names(rf, surnames_extracted, funky_prenames = set()):
 
 
 def regex_funky_prenames(nombre, funky_prenames):
-    """ This is a little slow (~4mins / million rows), but pretty thorough.
-        NB: adds to "funky_prenames" as a side-effect
+    """ Uses a series of regexes to identify prenames which are potentially unusual.
+    
+    This is a little slow (~4mins / million rows), but pretty thorough.
+    NOTE: adds to "funky_prenames" as a side-effect
     """
     mdel   = re_del.search(nombre)
     msant  = re_sant.search(nombre)
