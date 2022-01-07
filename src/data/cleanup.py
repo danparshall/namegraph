@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import re
 import datetime as dt
 import os
+import utils
 
 import unidecode
 from fuzzywuzzy import fuzz
@@ -16,13 +17,6 @@ from fuzzywuzzy import fuzz
 # enable progress bar on long operations
 from tqdm.auto import tqdm
 tqdm.pandas()
-
-
-
-# define legal NaN values; mostly we exclude 'NA', because is sometimes name, and empty string
-nan_values = ['-1.#IND', '1.#QNAN', '1.#IND', '-1.#QNAN', '#N/A N/A', '#N/A', 'N/A', 'n/a',
-              '<NA>', '#NA', 'NULL', 'null', 'NaN', '-NaN', 'nan', '-nan',]
-
 
 
 # in all cases, we look for a word boundary as the first group, then our funky name as the second
@@ -100,7 +94,7 @@ def get_compound_names(folder_interim):
     filepath = os.path.join(folder_interim, 'allnames.tsv')
     if os.path.exists(filepath):
     # we check if an "allnames" file has already been produced, and apply the regexes if so.
-        allnames = pd.read_csv(filepath, sep='\t', keep_default_na=False, na_values=nan_values)
+        allnames = pd.read_csv(filepath, sep='\t', keep_default_na=False, na_values=utils.get_nan_values())
 
         # NOTE: expands the set of compound names as a side effect
         allnames.obsname.map(lambda x: regex_compound_names(x, compound_names))
@@ -266,17 +260,9 @@ def fix_nombre(nombre):
 
 def load_registry(filepath_raw, logger, N_ROWS=None):
 
-    date_cols = ['dt_birth', 'dt_death', 'dt_marriage']
-
-    dtypes_reg = {'cedula': str, 'nombre': str, 'gender': 'category',
-                  'marital_status': 'category', 'place_birth':str,
-                  'nombre_spouse': str, 'nombre_padre': str, 'nombre_madre': str,
-                  'ced_spouse': str, 'ced_padre': str, 'ced_madre': str,
-                  'is_nat':bool, 'is_nat_padre':bool, 'is_nat_madre':bool
-                  }
     rf = pd.read_csv(filepath_raw, sep='\t', encoding='utf-8',
-                     parse_dates=date_cols, dtype=dtypes_reg,
-                     keep_default_na=False, na_values=nan_values,
+                     parse_dates=utils.get_date_cols(), dtype=utils.get_dtypes_reg(),
+                     keep_default_na=False, na_values=utils.get_nan_values(),
                      nrows=N_ROWS,
                      )
     # replace NaN with empty string

@@ -15,46 +15,15 @@ import cleanup
 import extract
 import parents
 import match
+import utils
 reload(cleanup)
 reload(extract)
 reload(parents)
 reload(match)
+reload(utils)
 
 # %run test_dataset.py "../../data/testdata/00-test_simpsons.tsv" '../../data/testdata/interim/'
 
-date_cols = ['dt_birth', 'dt_death', 'dt_marriage']
-
-dtypes_namedata = { 'cedula': str, 'nombre': str, 'nombre_spouse': str, 'marital_status': str,
-                    'place_birth': str, 'nombre_padre': str, 'nombre_madre': str, 
-                    'ced_spouse': str, 'ced_padre': str, 'ced_madre': str,
-                    'is_nat': bool, 'is_nat_padre': bool, 'is_nat_madre': bool,
-                    }
-
-dtypes_surname = {  'cedula': str, 'sur_padre': str, 'sur_madre': str, 'prenames': str,
-                    'has_padre': bool, 'is_plegal': bool, 'has_madre': bool, 'is_mlegal': bool,
-                    }
-
-dtypes_cleaned = {  'cedula': str, 'nombre': str, 'prenames': str, 'gender': str,
-                    'nombre_padre': str, 'sur_padre': str, 'has_padre': bool, 'is_plegal': bool,
-                    'nombre_madre': str, 'sur_madre': str, 'has_madre': bool, 'is_mlegal': bool,
-                    'is_funky': bool, 'nlen_padre': int, 'nlen_madre': int, 'n_char_nombre': int,
-                    'n_char_prename': int, 'maybe_husb': bool
-                    }
-
-dtypes_allnames = { 'obsname': str, 'n_sur': float, 'n_pre': float, 'sratio': float, 'pratio': float
-                    }
-
-dtypes_namecounts= {'obsname': str, 'n_sur': float, 'n_pre': float, 'sratio': float,
-                    'pratio': float, 'nlen': float, 'is_multimatch': bool
-                    }
-
-dtypes_newfreqfile = {  'cedula': str, 'nombre': str, 'sur_padre': str, 'sur_madre': str,
-                        'pre1': str, 'pre2': str, 'pre3': str, 'junk': str, 'nlen': int,
-                        }
-
-dtypes_padres = {'cedula': str, 'sur1': str, 'sur2': str, 'pre1': str,
-             'pre2': str, 'pre3': str, 'junk': str, 'flag': bool
-             }
 @click.command()
 @click.argument('filepath_raw', type=click.Path(exists=True))
 @click.argument('folder_interim', type=click.Path())
@@ -72,7 +41,7 @@ def main(filepath_raw, folder_interim):
     print("Cleaning registry")
     rf = cleanup.clean_nombres(rf, folder_interim)
 
-    test.test_data(rf, '../../data/testdata/01-simpsons_test_cases.tsv', dtypes_namedata, date_cols)
+    test.test_data(rf, '../../data/testdata/01-simpsons_test_cases.tsv', utils.get_dtypes_reg(), utils.get_date_cols())
 
     print("RF :", len(rf))
     print(rf.head())
@@ -104,11 +73,11 @@ def main(filepath_raw, folder_interim):
     allnames = extract.merge_underscore_names(name_counts)
 
 
-    test.test_data(surnames_extracted, '../../data/testdata/02-simpsons_test_cases_surname.tsv', dtypes_surname)
-    test.test_data(parsed, "../../data/testdata/03-simpsons_test_cases_names_cleaned.tsv", dtypes_cleaned)
-    test.test_names(allnames, "../../data/testdata/04-simpsons_test_cases_allnames.tsv", dtypes_allnames)
-    test.test_data(parsed, "../../data/testdata/05-simpsons_test_cases_newfreqfile.tsv", dtypes_newfreqfile)
-    test.test_names(name_counts, "../../data/testdata/06-simpsons_test_cases_namecounts.tsv", dtypes_newfreqfile)
+    test.test_data(surnames_extracted, '../../data/testdata/02-simpsons_test_cases_surname.tsv', utils.get_dtypes_surname())
+    test.test_data(parsed, "../../data/testdata/03-simpsons_test_cases_names_cleaned.tsv", utils.get_dtypes_cleaned())
+    test.test_names(allnames, "../../data/testdata/04-simpsons_test_cases_allnames.tsv", utils.get_dtypes_allnames())
+    test.test_data(parsed, "../../data/testdata/05-simpsons_test_cases_newfreqfile.tsv", utils.get_dtypes_newfreqfile())
+    test.test_names(name_counts, "../../data/testdata/06-simpsons_test_cases_namecounts.tsv", utils.get_dtypes_newfreqfile())
     
     ## BEGIN NB 3.0
     wts_pre, wts_sur = parents.wts(allnames)
@@ -116,12 +85,12 @@ def main(filepath_raw, folder_interim):
     padre = nf.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_padre', wts_pre, wts_sur),
                                          axis=1, result_type='expand')
 
-    test.test_data(padre, "../../data/testdata/07-test_cases_padre.tsv", dtypes_padres)
+    test.test_data(padre, "../../data/testdata/07-test_cases_padre.tsv", utils.get_dtypes_padres())
 
     madre = nf.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_madre', wts_pre, wts_sur),
                                          axis=1, result_type='expand')
     
-    test.test_data(madre, "../../data/testdata/08-test_cases_madre.tsv", dtypes_padres)
+    test.test_data(madre, "../../data/testdata/08-test_cases_madre.tsv", utils.get_dtypes_padres())
 
     ## BEGIN 4.0
     ncleaned_rf = match.merge_ncleaned_rf(nf,rf)

@@ -1,11 +1,11 @@
 import pandas as pd
-
-nan_values = ['-1.#IND', '1.#QNAN', '1.#IND', '-1.#QNAN', '#N/A N/A', '#N/A', 'N/A', 'n/a',
-              '<NA>', '#NA', 'NULL', 'null', 'NaN', '-NaN', 'nan', '-nan', ]
+import sys
+sys.path.append("../data")
+import utils
 
 def test_data(org_data, test_data_path, dtypes, date_col=None):
     test = pd.read_csv(test_data_path, sep='\t', parse_dates=date_col,
-                       dtype=dtypes, keep_default_na=False, na_values=nan_values)
+                       dtype=dtypes, keep_default_na=False, na_values=utils.get_nan_values())
     print("Test", test_data_path)
 
     for row in test.to_dict(orient='records'):
@@ -27,7 +27,7 @@ def test_data(org_data, test_data_path, dtypes, date_col=None):
 
 def test_names(org_data, test_data_path, dtypes, date_col=None):
     test = pd.read_csv(test_data_path, sep='\t', parse_dates=date_col,
-                       dtype=dtypes, keep_default_na=False, na_values=nan_values)
+                       dtype=dtypes, keep_default_na=False, na_values=utils.get_nan_values())
     print("Test", test_data_path)
 
     for row in test.to_dict(orient='records'):
