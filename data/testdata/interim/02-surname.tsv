@@ -1,0 +1,49 @@
+cedula	sur_padre	sur_madre	prenames	has_padre	is_plegal	has_madre	is_mlegal
+1	BOUVIER	GURNEY	DE SIMPSON MARJORIE JACQUELINE	True	True	True	True
+2	DEL BOSQUE	ZULETA	DE GONZALES MARGARITA	True	True	True	True
+3	DE LA MORA	GARCIA	DE DE LA BARRERA CARLOTA SOFIA	True	False	True	False
+4	SUAREZ	DEL ARCO	DE DEL PINO ROSALBA	True	False	True	False
+5	DEL CORRAL	DE_LA_ROSA	DE SIMPSON DORA	True	False	True	True
+6	DE LA HOZ	DE VIGO	DE DE LOS RIOS RAMONA	True	True	True	True
+7	SALAZAR	DE LA OSSA	DE DE LA HOZ KAREN FERNANDA	True	False	True	False
+8	DEL ROZAL	DE LA GUARDIA	DE DE VIGO CONSUELO	True	True	True	False
+9	DE LA BARRERA	DE LA MORA	DE DEL VALLE PAULA	True	False	True	False
+10	SIMPSON	OLSEN	HOMER JAY	True	True	True	True
+11	DEL CORRAL	PEREZ	CARLOS	True	True	True	True
+12	DEL_NINO_JESUS	SALAZAR	MARTIN FELIPE	True	False	True	False
+13	SIMPSON	DEL CORRAL	ANDREA CAMILA	True	False	True	False
+14	DEL PINO	DE LEON	FELIPE ANDRES	True	False	True	False
+15	DE LAS CASAS	DEL RIO	JAVIER ALFONSO	True	True	True	True
+16	VARON	CORTES	VICTOR FERNANDO	True	True	True	True
+17	DEL VALLE	DE LA CRUZ	VICTOR FELIPE	True	False	True	False
+18	DE LA BARRERA	DE_LA_PAZ	PABLO	True	False	True	False
+19	HAS PADRE PROBLEM			False	False	False	False
+20	HAS PADRE PROBLEM			False	False	False	False
+21	HAS PADRE PROBLEM			False	False	False	False
+22	HAS PADRE PROBLEM			False	False	False	False
+23	HAS PADRE PROBLEM			False	False	False	False
+24	HAS PADRE PROBLEM			False	False	False	False
+25	HAS PADRE PROBLEM			False	False	False	False
+26	HAS PADRE PROBLEM			False	False	False	False
+27	HAS PADRE PROBLEM			False	False	False	False
+28	HAS PADRE PROBLEM			False	False	False	False
+29	HAS PADRE PROBLEM			False	False	False	False
+30	HAS PADRE PROBLEM			False	False	False	False
+31	HAS PADRE PROBLEM			False	False	False	False
+32	HAS PADRE PROBLEM			False	False	False	False
+33	HAS PADRE PROBLEM			False	False	False	False
+34	HAS PADRE PROBLEM			False	False	False	False
+35	HAS PADRE PROBLEM			False	False	False	False
+36	HAS PADRE PROBLEM			False	False	False	False
+37	HAS PADRE PROBLEM			False	False	False	False
+38	HAS PADRE PROBLEM			False	False	False	False
+39	DE_LA_PAZ		DE DE LA BARRERA LUZ	True	False	False	False
+40	SIMPSON		BART	True	False	False	False
+41	HAS PADRE PROBLEM			False	False	False	False
+42	DE LA HOZ		MARIO	True	True	False	False
+43	HAS PADRE PROBLEM			False	False	False	False
+44	HAS PADRE PROBLEM			False	False	False	False
+45	HAS PADRE PROBLEM			False	False	False	False
+46	HAS PADRE PROBLEM			False	False	False	False
+47	HAS PADRE PROBLEM			False	False	False	False
+48	HAS PADRE PROBLEM			False	False	False	False
