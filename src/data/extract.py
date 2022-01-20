@@ -92,6 +92,7 @@ def parse_padre(row, parts, nomset, pset):
     """
     # start by trying the first LEN-1 tokens as a single name, then LEN-2 tokens, etc
     # this matches longest chunk found, so it should pick up compound names like DE LA CUEVA
+    padre = ""
     if row.nombre_padre:
         
         # we try names that might have doubling first, befor moving to the more common situation
@@ -105,7 +106,7 @@ def parse_padre(row, parts, nomset, pset):
             ):
             padre = poss_padre
             parts = ''.join(row.nombre.split(padre, maxsplit=1)).strip().split()
-            
+
         else:
             # start by trying everything except the last element (always a prename), and work down
             for ind in range(len(parts)-1, 0, -1):
@@ -118,8 +119,7 @@ def parse_padre(row, parts, nomset, pset):
                     padre = guess
                     parts = row.nombre.split(padre, maxsplit=1)[1].split()  # update before checking mother's name
                     break
-    else:
-        padre = ""
+                
     return padre, parts
 
 
