@@ -129,7 +129,9 @@ def get_compound_names(folder_interim):
                 'DI LUCA', 'VARGAS MACHUCA', 'DIAZ GRANADOS', 'SIG TU', 'MAN GING', 'DE LA FE', "DE BERAS",
                 "DE BOYER DE CAMPRIEU", "DEL NINO JESUS", "DE EL CISNE", "DE EL ROCIO", "DE LA FE", 'DE SAN JOSE', 
                 'DE SANTA ANA', 'DEL LOS ANGELES', 
-            "DE LA CUEVA", "RUIZ ESCODA"
+                "DE LA CUEVA", "RUIZ ESCODA", "DEL BOSQUE", "DE LA MORA", "DEL ARCO", "DEL CORRAL", "DE LA HOZ",
+                "DE LA OSSA", "DE LOS RIOS", "DEL ROZAL", "DE LAS CASAS", "DE LA CRUZ", "DE LA RENTA", "DE VIGO",
+                "DEL CORAL", "DE LA ROCHE", "DE LA ESPRIELLA", "DE LA GUARDIA", "DEL PINO", 
              }
     compound_names = sorted(compound_names|longnames|y_names|dedications|others, key=len, reverse=True)
     return compound_names
