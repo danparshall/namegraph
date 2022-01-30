@@ -75,20 +75,26 @@ def get_substrings(nombre, START=0):
             if (chunk_len > 1) or (len(sub) > 2):
                 yield sub
 
-def desinterpret_mother_surname(madre):
-    """ Manage the cases when both the mother and the daughter use honorific. Mother's surname cannot end in ' DE' or ' LA'
+def desinterpret_surname(surname):
+    """ Correct the detection of monosylabus ('DE') and non coherent surnames (endswith 'DE', 'DEL', 'LA')
     
+    Manage the cases when both the mother and the daughter use honorific. Mother's surname cannot end in ' DE' or ' LA'
+    Sometimes when the names are in short form (one prename and one surname), it detects mother or father surname as
+    monosylabus words as 'DE'.
     Args:
-        madre: possible mother's surname given by parse_overlap and parse_madre.
+        surname: detected mother or father's surname given by parse functions.
 
     Returns:
-        madre: mother's surname without honorific.
+        surname: mother or father's surname without honorific and monosylabus
     """
-    while madre.endswith(" DE") or madre.endswith(" LA"):
-        madre = madre[:-3]
+    while surname.endswith(" DE") or surname.endswith(" LA") or surname.endswith(" DEL"):
+        surname = surname[:-3]
+        surname = surname.strip()
         # madre = ''.join(madre.rsplit(" DE", 1))
     
-    return madre
+    if surname == 'DE' or surname == 'DEL':
+        surname = ''
+    return surname
 
 def parse_padre(row, parts, nomset, pset):
     """ Identifies surname of father by comparing the 'nombre' and 'nombre_padre' fields within a given row.
@@ -132,7 +138,8 @@ def parse_padre(row, parts, nomset, pset):
                     padre = guess
                     parts = row.nombre.split(padre, maxsplit=1)[1].split()  # update before checking mother's name
                     break
-                
+
+    padre = desinterpret_surname(padre)            
     return padre, parts
 
 
@@ -206,7 +213,7 @@ def parse_madre(row, parts, nomset, mset):
                         madre = guess
                         break
 
-    madre = desinterpret_mother_surname(madre)
+    madre = desinterpret_surname(madre)
     return madre
 
 
@@ -243,7 +250,8 @@ def parse_overlaps(row, nomset, pset, mset):
                     madre = guess
                     break
 
-    madre = desinterpret_mother_surname(madre)
+    padre = desinterpret_surname(padre)
+    madre = desinterpret_surname(madre)
     return padre, madre
 
 
