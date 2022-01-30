@@ -319,11 +319,11 @@ def parse_fullrow(row):
     if padre:
         out['has_padre'] = True
         out['sur_padre'] = padre
-        out['is_plegal'] = row.nombre_padre.startswith(padre)
+        out['is_plegal'] = row.nombre_padre.startswith(padre) or row.nombre_padre.endswith(padre) or (padre in row.nombre_padre)
     if madre:
         out['has_madre'] = True
         out['sur_madre'] = madre
-        out['is_mlegal'] = row.nombre_madre.startswith(madre)
+        out['is_mlegal'] = row.nombre_madre.startswith(madre) or row.nombre_madre.endswith(madre) or (madre in row.nombre_madre)
     out['prenames'] = prenames
     return out
 
