@@ -128,8 +128,9 @@ def get_compound_names(folder_interim):
     others = {"MONTES DE OCA", "ROMO LEROUX", 'SAENZ DE VITERI', "FERNANDEZ DE CORDOVA", "FLORES DE VALGAZ",
                 'DI LUCA', 'VARGAS MACHUCA', 'DIAZ GRANADOS', 'SIG TU', 'MAN GING', 'DE LA FE', "DE BERAS",
                 "DE BOYER DE CAMPRIEU", "DEL NINO JESUS", "DE EL CISNE", "DE EL ROCIO", "DE LA FE", 'DE SAN JOSE', 
-                'DE SANTA ANA', 'DEL LOS ANGELES', 
-                "DE LA CUEVA", "RUIZ ESCODA", "DEL BOSQUE", "DE LA MORA", "DEL ARCO", "DEL CORRAL", "DE LA HOZ",
+                'DE SANTA ANA', 'DEL LOS ANGELES',
+    }    
+    test_data = {"DE LA CUEVA", "RUIZ ESCODA", "DEL BOSQUE", "DE LA MORA", "DEL ARCO", "DEL CORRAL", "DE LA HOZ",
                 "DE LA OSSA", "DE LOS RIOS", "DEL ROZAL", "DE LAS CASAS", "DE LA CRUZ", "DE LA RENTA", "DE VIGO",
                 "DEL CORAL", "DE LA ROCHE", "DE LA ESPRIELLA", "DE LA GUARDIA", "DEL PINO", 
              }
