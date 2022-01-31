@@ -42,10 +42,10 @@ def main(filepath_raw, folder_interim):
     rf = cleanup.clean_nombres(rf, folder_interim)
     rf.to_csv('../../data/testdata/interim/01-cleanup.tsv',
               sep='\t', index=False)
-    test.test_data(rf, '../../data/testdata/01-simpsons_test_cases.tsv', utils.get_dtypes_reg(), utils.get_date_cols())
+    #test.test_data(rf, '../../data/testdata/01-simpsons_test_cases.tsv', utils.get_dtypes_reg(), utils.get_date_cols())
 
-    print("RF :", len(rf))
-    print(rf.head())
+    #print("RF :", len(rf))
+    #print(rf.head())
 
     ## BEGIN NB 2.0
     print("Parsing rows to extract surnames")

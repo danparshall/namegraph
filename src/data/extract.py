@@ -5,6 +5,7 @@ import re
 
 # enable progress bar on long operations
 from tqdm.auto import tqdm
+from itertools import product
 tqdm.pandas()
 
 
@@ -96,6 +97,18 @@ def desinterpret_surname(surname):
         surname = ''
     return surname
 
+def fix_spelling_errors(nombre):
+    keyletters = ['ZS','VB','IY']
+
+    # Convert input string into a list so we can easily substitute letters
+    seq = list(nombre)
+    for key in keyletters:
+        indices = [i for i, c in enumerate(seq) if c in key]
+        for t in product(key, repeat = len(indices)):
+            for i, c in zip(indices, t):
+                seq[i] = c
+            yield ''.join(seq)
+
 def parse_padre(row, parts, nomset, pset):
     """ Identifies surname of father by comparing the 'nombre' and 'nombre_padre' fields within a given row.
     
@@ -139,10 +152,22 @@ def parse_padre(row, parts, nomset, pset):
                     parts = row.nombre.split(padre, maxsplit=1)[1].split()  # update before checking mother's name
                     break
 
-    padre = desinterpret_surname(padre)            
+    padre = desinterpret_surname(padre)
+
     return padre, parts
 
+def wrap_parse_padre(row, parts, nomset, pset):
+    padre, parts = parse_padre(row, parts, nomset, pset)
 
+    if padre == '':
+        for combinacion in fix_spelling_errors(row.nombre):
+            nomset = set(combinacion.split())
+            parts = combinacion.split()
+            padre, parts = parse_padre(row, parts, nomset, pset)
+            if padre != '':
+                break
+    
+    return padre, parts
 
 def parse_madre(row, parts, nomset, mset):
     """ Identifies surname of mother by comparing the 'nombre' and 'nombre_madre' fields within a given row.
@@ -216,7 +241,18 @@ def parse_madre(row, parts, nomset, mset):
     madre = desinterpret_surname(madre)
     return madre
 
+def wrap_parse_madre(row, parts, nomset, pset):
+    madre = parse_madre(row, parts, nomset, pset)
 
+    if madre == '':
+        for combinacion in fix_spelling_errors(row.nombre):
+            nomset = set(combinacion.split())
+            parts = combinacion.split()
+            madre = parse_madre(row, parts, nomset, pset)
+            if madre != '':
+                break
+
+    return madre
 
 def parse_overlaps(row, nomset, pset, mset):
     """ Handles special case when tokens in 'nombre_padre' and 'nombre_madre' overlap.
@@ -302,7 +338,7 @@ def parse_fullrow(row):
 
         #### FATHERS NAME ####
         try:
-            padre, parts = parse_padre(row, parts, nomset, pset)
+            padre, parts = wrap_parse_padre(row, parts, nomset, pset)
         except:
             out['sur_padre'] = "HAS PADRE PROBLEM"
             return out
@@ -310,7 +346,7 @@ def parse_fullrow(row):
         #### MOTHERS NAME ####
         # having removed the padre name from the front of the string, try similar trick with the madre name
         try:
-            madre = parse_madre(row, parts, nomset, mset)
+            madre = wrap_parse_madre(row, parts, nomset, mset)
         except:
             out['sur_madre'] = "HAS MADRE PROBLEM"
             return out
