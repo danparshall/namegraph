@@ -156,18 +156,18 @@ def parse_padre(row, parts, nomset, pset):
 
     return padre, parts
 
-def wrap_parse_padre(row, parts, nomset, pset):
-    padre, parts = parse_padre(row, parts, nomset, pset)
+# def wrap_parse_padre(row, parts, nomset, pset):
+#     padre, parts = parse_padre(row, parts, nomset, pset)
 
-    if padre == '':
-        for combinacion in fix_spelling_errors(row.nombre):
-            nomset = set(combinacion.split())
-            parts = combinacion.split()
-            padre, parts = parse_padre(row, parts, nomset, pset)
-            if padre != '':
-                break
+#     if padre == '':
+#         for combinacion in fix_spelling_errors(row.nombre):
+#             nomset = set(combinacion.split())
+#             parts = combinacion.split()
+#             padre, parts = parse_padre(row, parts, nomset, pset)
+#             if padre != '':
+#                 break
     
-    return padre, parts
+#     return padre, parts
 
 def parse_madre(row, parts, nomset, mset):
     """ Identifies surname of mother by comparing the 'nombre' and 'nombre_madre' fields within a given row.
@@ -241,18 +241,21 @@ def parse_madre(row, parts, nomset, mset):
     madre = desinterpret_surname(madre)
     return madre
 
-def wrap_parse_madre(row, parts, nomset, pset):
-    madre = parse_madre(row, parts, nomset, pset)
+# def wrap_parse_madre(row, parts, nomset, mset, padre):
+#     madre = parse_madre(row, parts, nomset, mset)
 
-    if madre == '':
-        for combinacion in fix_spelling_errors(row.nombre):
-            nomset = set(combinacion.split())
-            parts = combinacion.split()
-            madre = parse_madre(row, parts, nomset, pset)
-            if madre != '':
-                break
+#     if madre == '':
+#         for combinacion in fix_spelling_errors(row.nombre):
+#             #print(combinacion)
+#             nomset = set(combinacion.split())
+#             #print(nomset)
+#             parts = combinacion.split(padre, maxsplit=1)[1].split()
+#             #print(parts)
+#             madre = parse_madre(row, parts, nomset, mset)
+#             if madre != '':
+#                 break
 
-    return madre
+#     return madre
 
 def parse_overlaps(row, nomset, pset, mset):
     """ Handles special case when tokens in 'nombre_padre' and 'nombre_madre' overlap.
@@ -338,7 +341,7 @@ def parse_fullrow(row):
 
         #### FATHERS NAME ####
         try:
-            padre, parts = wrap_parse_padre(row, parts, nomset, pset)
+            padre, parts = parse_padre(row, parts, nomset, pset)
         except:
             out['sur_padre'] = "HAS PADRE PROBLEM"
             return out
@@ -346,7 +349,7 @@ def parse_fullrow(row):
         #### MOTHERS NAME ####
         # having removed the padre name from the front of the string, try similar trick with the madre name
         try:
-            madre = wrap_parse_madre(row, parts, nomset, mset)
+            madre = parse_madre(row, parts, nomset, mset)
         except:
             out['sur_madre'] = "HAS MADRE PROBLEM"
             return out
@@ -412,7 +415,6 @@ def clean_names(rf, surnames_extracted, funky_prenames = list()):
 
     # join the parsed names to the originals (but only retain the well-behaved ones)
     nf = pd.concat([rf[['cedula','nombre','nombre_padre','nombre_madre','gender']], surnames_extracted.iloc[:,1:]], axis=1)
-
     nf = nf.loc[(nf.sur_padre.notnull()) & (nf.sur_padre != "") & nf.has_padre & 
                 (nf.sur_madre.notnull()) & (nf.sur_madre != "") & nf.has_madre & 
                 (nf.prenames.notnull() & (nf.prenames != "")),
@@ -590,18 +592,6 @@ def fix_mixed_presur_names(nf, name_counts):
     """ Fix cases where what appears to be multi-token surname is actually a surname + prename.
     
     """
-    EVIDENCE_TO_FLIP = 1000  # how strongly we need to believe that we've mis-parsed the name; found by eyeballing, should be updated
-    dual_sur = name_counts[(name_counts.nlen == 2) & ~name_counts.is_multimatch]
-    dual_sur = dual_sur.apply(lambda x: x.obsname.split(), axis=1, result_type='expand')
-    dual_sur.columns = ['probably_sur', 'probably_pre']
-    dual_sur = dual_sur.merge(name_counts[['obsname', 'sratio']], left_on='probably_sur', right_on='obsname').drop(columns=['obsname'])
-    dual_sur = dual_sur.merge(name_counts[['obsname', 'pratio']], left_on='probably_pre', right_on='obsname').drop(columns=['obsname'])
-    dual_sur['evidence'] = dual_sur.sratio * dual_sur.pratio
-
-    needs_repair = dual_sur[dual_sur.evidence > EVIDENCE_TO_FLIP]
-    needs_repair = set(needs_repair.probably_sur + ' ' + needs_repair.probably_pre)
-
-    print("Repairing {} mixed pre/sur records".format(len(needs_repair)))
     def repair_dual_surmadre(row):
         out = {'sur_madre': "", 'prenames': ""}
         sur_madre, pre1 = row.sur_madre.split()
@@ -609,9 +599,22 @@ def fix_mixed_presur_names(nf, name_counts):
         out['sur_madre'] = sur_madre
         return out
 
-    fix_rows = nf.sur_madre.isin(needs_repair)
-    nf.loc[fix_rows, ['sur_madre', 'prenames']] = nf[fix_rows].progress_apply(
-                                                    lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
+    EVIDENCE_TO_FLIP = 1000  # how strongly we need to believe that we've mis-parsed the name; found by eyeballing, should be updated
+    dual_sur = name_counts[(name_counts.nlen == 2) & ~name_counts.is_multimatch]
+    if not dual_sur.empty:
+        dual_sur = dual_sur.apply(lambda x: x.obsname.split(), axis=1, result_type='expand')
+        dual_sur.columns = ['probably_sur', 'probably_pre']
+        dual_sur = dual_sur.merge(name_counts[['obsname', 'sratio']], left_on='probably_sur', right_on='obsname').drop(columns=['obsname'])
+        dual_sur = dual_sur.merge(name_counts[['obsname', 'pratio']], left_on='probably_pre', right_on='obsname').drop(columns=['obsname'])
+        dual_sur['evidence'] = dual_sur.sratio * dual_sur.pratio
+
+        needs_repair = dual_sur[dual_sur.evidence > EVIDENCE_TO_FLIP]
+        needs_repair = set(needs_repair.probably_sur + ' ' + needs_repair.probably_pre)
+
+        print("Repairing {} mixed pre/sur records".format(len(needs_repair)))
+        fix_rows = nf.sur_madre.isin(needs_repair)
+        nf.loc[fix_rows, ['sur_madre', 'prenames']] = nf[fix_rows].progress_apply(
+                                                        lambda row: repair_dual_surmadre(row), axis=1, result_type='expand')
     return nf
 
 
@@ -650,7 +653,9 @@ def fix_husband_honorific(nf, rf, funky_prenames):
     rf.loc[rf.cedula.isin(ceds_to_fix), 'nombre_madre'] = rf_removed.nombre_madre
     surnames_fixed = rf_removed.apply(lambda row: parse_fullrow(row), axis=1, result_type='expand')
     nf_fixed, funky_prenames = clean_names(rf_removed, surnames_fixed)
-
+    print("////////////////////////////////")
+    print('maybe_husband')
+    print(nf_fixed)
     ceds_were_fixed = set(nf_fixed[nf_fixed.nombre.notnull()].cedula)
     cols_fixed = ['nombre', 'prenames', 'nombre_madre', 'sur_madre', 'has_madre', 'is_mlegal', 'nlen_madre', 'n_char_nombre', 'n_char_prenames']
     for col in cols_fixed:

@@ -40,12 +40,10 @@ def main(filepath_raw, folder_interim):
 
     print("Cleaning registry")
     rf = cleanup.clean_nombres(rf, folder_interim)
-    rf.to_csv('../../data/testdata/interim/01-cleanup.tsv',
-              sep='\t', index=False)
-    #test.test_data(rf, '../../data/testdata/01-simpsons_test_cases.tsv', utils.get_dtypes_reg(), utils.get_date_cols())
+    # test.test_data(rf, '../../data/testdata/01-simpsons_test_cases.tsv', utils.get_dtypes_reg(), utils.get_date_cols())
 
-    #print("RF :", len(rf))
-    #print(rf.head())
+    print("RF :", len(rf))
+    print(rf.shape)  # head())
 
     ## BEGIN NB 2.0
     print("Parsing rows to extract surnames")
@@ -54,29 +52,32 @@ def main(filepath_raw, folder_interim):
     surnames_extracted = rf.apply(lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
     surnames_extracted.to_csv('../../data/testdata/interim/02-surname.tsv',
               sep='\t', index=False)
-    # print("surnames :", len(surnames_extracted))
-    # print(surnames_extracted.head())
+    print("surnames :", len(surnames_extracted))
+    print(surnames_extracted.shape)#head())
 
-    # nf, funky_prenames = extract.clean_names(rf, surnames_extracted)
+    nf, funky_prenames = extract.clean_names(rf, surnames_extracted)
 
-    # print("len(NF):", len(nf))
-    # print(nf.head())
-    # # initial extraction
-    # parsed = extract.parse_prenames(nf)
-    # name_counts = extract.make_allnames(parsed)
+    print("len(NF):", len(nf))
+    print(nf.shape)  # .head())
+    # initial extraction
+    parsed = extract.parse_prenames(nf)
+    name_counts = extract.make_allnames(parsed)
 
-    # # now do some cleaning
-    # nf = extract.fix_mixed_presur_names(nf, name_counts)
-    # nf, rf = extract.fix_husband_addition(nf, rf, funky_prenames)
+    # now do some cleaning
+    nf = extract.fix_mixed_presur_names(nf, name_counts)
+    nf, rf = extract.fix_husband_honorific(nf, rf, funky_prenames)
+    # now re-parse the cleaned data
+    parsed = extract.parse_prenames(nf)
+    name_counts = extract.make_allnames(parsed)
+    allnames = extract.merge_underscore_names(name_counts)
 
-    # # now re-parse the cleaned data
-    # parsed = extract.parse_prenames(nf)
-    # name_counts = extract.make_allnames(parsed)
-    # allnames = extract.merge_underscore_names(name_counts)
+    nf.to_csv('../../data/testdata/interim/03-names_cleaned.tsv', sep='\t', index=False)
+    allnames.to_csv('../../data/testdata/interim/04-allnames.tsv', sep='\t', index=False)
+    parsed.to_csv('../../data/testdata/interim/05-newfreqfile.tsv', sep='\t', index=False)
+    name_counts.to_csv('../../data/testdata/interim/06-namecounts.tsv', sep='\t', index=False)
 
-
-    test.test_data(surnames_extracted, '../../data/testdata/02-simpsons_test_cases_surname.tsv', utils.get_dtypes_surname())
-    # test.test_data(parsed, "../../data/testdata/03-simpsons_test_cases_names_cleaned.tsv", utils.get_dtypes_cleaned())
+    # test.test_data(surnames_extracted, '../../data/testdata/02-simpsons_test_cases_surname.tsv', utils.get_dtypes_surname())
+    # test.test_data(nf, "../../data/testdata/03-simpsons_test_cases_names_cleaned.tsv", utils.get_dtypes_cleaned())
     # test.test_names(allnames, "../../data/testdata/04-simpsons_test_cases_allnames.tsv", utils.get_dtypes_allnames())
     # test.test_data(parsed, "../../data/testdata/05-simpsons_test_cases_newfreqfile.tsv", utils.get_dtypes_newfreqfile())
     # test.test_names(name_counts, "../../data/testdata/06-simpsons_test_cases_namecounts.tsv", utils.get_dtypes_newfreqfile())
