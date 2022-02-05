@@ -36,8 +36,8 @@ cedula	sur_padre	sur_madre	prenames	has_padre	is_plegal	has_madre	is_mlegal
 35	DEL VALLE	DE_LA_TORRE	LUIS ARMANDO	True	True	True	True
 36	DE LAS CASAS	DE LA VEGA	JUAN	True	True	True	True
 37	DE LA BARRERA		DE DEL_NINO_JESUS JOSEFA	True	True	False	False
-38	HAS PADRE PROBLEM			False	False	False	False
-39	DE_LA_PAZ	DE_LA_PAZ	HAS SURNAME PROBLEM	True	True	True	True
+38		GONZALES	DE DEL VALLE MARGARITA	False	False	True	True
+39	DE_LA_PAZ		DE DE LA BARRERA LUZ	True	True	False	False
 40	SIMPSON		BART	True	True	False	False
 41		DEL CORRAL	DORA	False	False	True	True
 42	DE LA HOZ		MARIO	True	True	False	False
@@ -84,12 +84,12 @@ cedula	sur_padre	sur_madre	prenames	has_padre	is_plegal	has_madre	is_mlegal
 83	DEL VALLE	DE_LA_TORRE	LUIS ARMANDO	True	True	True	True
 84	DE LAS CASAS	DE LA VEGA	JUAN	True	True	True	True
 85	DE LA BARRERA		DE DEL_NINO_JESUS JOSEFA	True	True	False	False
-86	HAS PADRE PROBLEM			False	False	False	False
-87	DE_LA_PAZ	DE_LA_PAZ	HAS SURNAME PROBLEM	True	True	True	True
+86		GONZALES	DE DEL VALLE MARGARITA	False	False	True	True
+87	DE_LA_PAZ		DE DE LA BARRERA LUZ	True	True	False	False
 88	SIMPSON		BART	True	True	False	False
 89		DEL CORRAL	DORA	False	False	True	True
 90	DE LA HOZ		MARIO	True	True	False	False
-91	GARCIA	GARCIA	HAS SURNAME PROBLEM	True	True	True	True
+91	GARCIA		DE DE LA MORA LEONOR	True	True	False	False
 92	DEL VALLE		DE DEL PINO JULIA	True	True	False	False
 93	DE LA CRUZ		DE DEL VALLE CECILIA	True	True	False	False
 94		BOUVIER	MARGARET EVELYN	False	False	True	True
