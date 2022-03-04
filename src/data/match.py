@@ -169,10 +169,9 @@ def parsed(parent, ceds_found):
 
     # for col in utils.get_cols_cat_parsed():
     #     parent[col].cat.add_categories('', inplace=True)
-
     # parent.fillna('', inplace=True)
     parsed = parent[~parent.cedula.isin(ceds_found)]
-    
+
     return parsed
 
 def match_padre_namedata(par, sub):
@@ -183,8 +182,6 @@ def match_padre_namedata(par, sub):
     # if we have 2 prenames, use them in sequence
     if par.pre2:
         sub = sub[(sub.pre1 == par.pre1) & (sub.pre2 == par.pre2)]
-    if len(sub) == 0:
-        return ''
 
     # if we only have 1 prename, it might be in either column
     if par.pre1:
@@ -215,8 +212,6 @@ def match_madre_namedata(par, sub):
     # if we have 2 prenames, use them in sequence
     if par.pre2:
         sub = sub[(sub.pre1 == par.pre1) & (sub.pre2 == par.pre2)]
-    if len(sub) == 0:
-        return ''
 
     # if we only have 1 prename, it might be in either column
     if par.pre1:
@@ -238,40 +233,60 @@ def match_madre_namedata(par, sub):
     else:
         return "Found {0} options".format(len(sub))
 
-def matched_by_name(parsed, guys, file_out):
+def matched_by_name(parsed, names, gender, file_out):
+
+    guys = names[names.gender == gender]
+    print('guys_columns',guys.columns)
     count = parsed.sur1.value_counts()
 
     with open(file_out, 'wt') as f:
         results = []
         past = set()
+        if gender == 'F':
+            for ind, chk_name in enumerate(count[count >= 1].index):#tqdm(enumerate(count[count >= 1].index)):
 
-        for ind, chk_name in tqdm(enumerate(sorted(count[count > 1].index))):
+                if ind % 1000 == 0:
+                    print("  >>>>>>>>>>>> ITER " + str(ind))
+                if pd.isnull(chk_name) or chk_name == '':
+                    continue
+                
+                print('\nchk_name:', chk_name)
+                # copying only takes ~15 mins overhead, and probably makes subsequent searching faster.  Do it.
+                sub_citizens = guys[guys.sur_padre == chk_name].copy(deep=True)
+                sub_madres = parsed[parsed.sur1 == chk_name]
+                print(sub_madres.columns)
+                if len(sub_citizens) >= 1: # 1000 but I'm proving on test_data
+                    # show the progress if there are a lot of names
+                    print(chk_name, len(sub_madres))
+                    for par in sub_madres.itertuples(): #tqdm(sub_madres.itertuples()):
+                        print('\npaso', par,'\n')
+                        if par.cedula in past:
+                            break
+                        out = match_madre_namedata(par, sub_citizens)
+                        print('paso_match')
+                        results.append((par.cedula, out))
+                        past.add(par.cedula)
+                        f.write(par.cedula + '\t' + out + '\n')
+        elif gender == 'M':
+            for ind, chk_name in tqdm(enumerate(sorted(count[count >= 1].index))):
 
-            if ind % 1000 == 0:
-                print("  >>>>>>>>>>>> ITER " + str(ind))
+                if ind % 1000 == 0:
+                    print("  >>>>>>>>>>>> ITER " + str(ind))
 
-            if pd.isnull(chk_name) or chk_name == '':
-                continue
+                if pd.isnull(chk_name) or chk_name == '':
+                    continue
 
-            # copying only takes ~15 mins overhead, and probably makes subsequent searching faster.  Do it.
-            sub_citizens = guys[guys.sur_padre == chk_name].copy(deep=True)
-            sub_madres = parsed[parsed.sur1 == chk_name]
+                # copying only takes ~15 mins overhead, and probably makes subsequent searching faster.  Do it.
+                sub_citizens = guys[guys.sur_padre == chk_name].copy(deep=True)
+                sub_padres = parsed[parsed.sur1 == chk_name]
 
-            if len(sub_madres) >= 1: # 1000 but I'm proving on test_data
-                # show the progress if there are a lot of names
-                print(chk_name, len(sub_madres))
-                for par in tqdm(sub_madres.itertuples()):
-                    if par.cedula in past:
-                        break
-                    out = match_madre_namedata(par, sub_citizens)
-                    results.append((par.cedula, out))
-                    past.add(par.cedula)
-                    f.write(par.cedula + '\t' + out + '\n')
-            else:
-                for par in sub_madres.itertuples():
-                    if par.cedula in past:
-                        break
-                    out = match_madre_namedata(par, sub_citizens)
-                    results.append((par.cedula, out))
-                    past.add(par.cedula)
-                    f.write(par.cedula + '\t' + out + '\n')
+                if len(sub_citizens) >= 1000:  # 1000 but I'm proving on test_data
+                    # show the progress if there are a lot of names
+                    print(chk_name, len(sub_padres))
+                    for par in tqdm(sub_padres.itertuples()):
+                        if par.cedula in past:
+                            break
+                        out = match_padre_namedata(par, sub_citizens)
+                        results.append((par.cedula, out))
+                        past.add(par.cedula)
+                        f.write(par.cedula + '\t' + out + '\n')

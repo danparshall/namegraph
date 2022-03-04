@@ -72,11 +72,11 @@ def main(filepath_raw, folder_interim):
     parsed.to_csv('../../data/testdata/interim/05-newfreqfile.tsv', sep='\t', index=False)
     name_counts.to_csv('../../data/testdata/interim/06-namecounts.tsv', sep='\t', index=False)
 
-    test.test_data(surnames_extracted, '../../data/testdata/02-test_cases_surname.tsv', utils.get_dtypes_surname())
-    test.test_data(nf, "../../data/testdata/03-test_cases_names_cleaned.tsv", utils.get_dtypes_cleaned())
-    test.test_names(allnames, "../../data/testdata/04-test_cases_allnames.tsv", utils.get_dtypes_allnames())
-    test.test_data(parsed, "../../data/testdata/05-test_cases_newfreqfile.tsv", utils.get_dtypes_newfreqfile())
-    test.test_names(name_counts, "../../data/testdata/06-test_cases_namecounts.tsv", utils.get_dtypes_newfreqfile())
+    # test.test_data(surnames_extracted, '../../data/testdata/02-test_cases_surname.tsv', utils.get_dtypes_surname())
+    # test.test_data(nf, "../../data/testdata/03-test_cases_names_cleaned.tsv", utils.get_dtypes_cleaned())
+    # test.test_names(allnames, "../../data/testdata/04-test_cases_allnames.tsv", utils.get_dtypes_allnames())
+    # test.test_data(parsed, "../../data/testdata/05-test_cases_newfreqfile.tsv", utils.get_dtypes_newfreqfile())
+    # test.test_names(name_counts, "../../data/testdata/06-test_cases_namecounts.tsv", utils.get_dtypes_newfreqfile())
     
     # ## BEGIN NB 3.0
     wts_pre, wts_sur = parents.wts(allnames)
@@ -101,8 +101,8 @@ def main(filepath_raw, folder_interim):
     matched_madres.to_csv('../../data/testdata/interim/10-matched_madres.tsv', sep='\t', index = False)
 
     ## BEGIN 5.0
-    names = match.create_names(parsed, rf)
-
+    names = match.create_names(parsed, rf)  
+    # Guys that has ced_padre or ced_madre
     ceds_found_madre = match.ceds_found(names, matched_madres, 'ced_madre')
     ceds_found_padre = match.ceds_found(names, matched_padres, 'ced_padre')
 
@@ -111,8 +111,8 @@ def main(filepath_raw, folder_interim):
 
     file_out_padre = '../../data/testdata/interim/11-MADRES_matched_by_name.tsv'
     file_out_madre = '../../data/testdata/interim/12-PADRES_matched_by_name.tsv'
-    match.matched_by_name(mparsed, nf[nf.gender == 2], file_out_madre)
-    match.matched_by_name(pparsed, nf[nf.gender == 1], file_out_padre)
+    match.matched_by_name(mparsed, names, 'F', file_out_madre)
+    match.matched_by_name(pparsed, names, 'M', file_out_padre)
 
 
 

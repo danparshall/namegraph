@@ -42,8 +42,8 @@ def main(filepath_raw, folder_interim):
 
     surnames_extracted = rf.apply(
         lambda row: extract.parse_fullrow(row), axis=1, result_type='expand')
-    surnames_extracted.to_csv(
-        '../../data/testdata/interim/02-surname.tsv', sep='\t', index=False)
+    # surnames_extracted.to_csv(
+    #     '../../data/testdata/interim/02-surname.tsv', sep='\t', index=False)
 
     nf, funky_prenames = extract.clean_names(rf, surnames_extracted)
 
@@ -61,14 +61,14 @@ def main(filepath_raw, folder_interim):
     name_counts = extract.make_allnames(parsed)
     allnames = extract.merge_underscore_names(name_counts)
 
-    nf.to_csv('../../data/testdata/interim/03-names_cleaned.tsv',
-              sep='\t', index=False)
-    allnames.to_csv('../../data/testdata/interim/04-allnames.tsv',
-                    sep='\t', index=False)
-    parsed.to_csv('../../data/testdata/interim/05-newfreqfile.tsv',
-                  sep='\t', index=False)
-    name_counts.to_csv(
-        '../../data/testdata/interim/06-namecounts.tsv', sep='\t', index=False)
+    # nf.to_csv('../../data/testdata/interim/03-names_cleaned.tsv',
+    #           sep='\t', index=False)
+    # allnames.to_csv('../../data/testdata/interim/04-allnames.tsv',
+    #                 sep='\t', index=False)
+    # parsed.to_csv('../../data/testdata/interim/05-newfreqfile.tsv',
+    #               sep='\t', index=False)
+    # name_counts.to_csv(
+    #     '../../data/testdata/interim/06-namecounts.tsv', sep='\t', index=False)
 
 
     ## BEGIN NB 3.0
@@ -81,31 +81,31 @@ def main(filepath_raw, folder_interim):
     madre = nf.progress_apply(lambda row: parents.extract_prename_parent(row, 'nombre_madre', wts_pre, wts_sur),
                                          axis=1, result_type='expand')
 
-    padre.to_csv('../../data/testdata/interim/07-padre.tsv', sep='\t', index = False)
-    madre.to_csv('../../data/testdata/interim/08-madre.tsv', sep='\t', index=False)
+    # padre.to_csv('../../data/testdata/interim/07-padre.tsv', sep='\t', index = False)
+    # madre.to_csv('../../data/testdata/interim/08-madre.tsv', sep='\t', index=False)
 
     ## BEGIN 4.0
     ncleaned_rf = match.merge_ncleaned_rf(nf, rf)
 
     matched_padres, matched_madres = match.exact_name(ncleaned_rf)
     matched_padres.to_csv(
-        '../../data/testdata/interim/09-matched_padres.tsv', sep='\t', index=False)
+        '/home/juan.russy/shared/proof_run_FamNet/interim/09-matched_padres.tsv', sep='\t', index=False)
     matched_madres.to_csv(
-        '../../data/testdata/interim/10-matched_madres.tsv', sep='\t', index=False)
+        '/home/juan.russy/shared/proof_run_FamNet/interim/10-matched_madres.tsv', sep='\t', index=False)
 
     ## BEGIN 5.0
     names = match.create_names(parsed, rf)
-
+    # Guys that has ced_padre or ced_madre
     ceds_found_madre = match.ceds_found(names, matched_madres, 'ced_madre')
     ceds_found_padre = match.ceds_found(names, matched_padres, 'ced_padre')
 
     mparsed = match.parsed(madre, ceds_found_madre)
     pparsed = match.parsed(padre, ceds_found_padre)
 
-    file_out_padre = '../../data/testdata/interim/11-MADRES_matched_by_name.tsv'
-    file_out_madre = '../../data/testdata/interim/12-PADRES_matched_by_name.tsv'
-    match.matched_by_name(mparsed, nf[nf.gender == 2], file_out_madre)
-    match.matched_by_name(pparsed, nf[nf.gender == 1], file_out_padre)
+    file_out_padre = '/home/juan.russy/shared/proof_run_FamNet/interim/11-MADRES_matched_by_name.tsv'
+    file_out_madre = '/home/juan.russy/shared/proof_run_FamNet/interim/12-PADRES_matched_by_name.tsv'
+    match.matched_by_name(mparsed, names, 'F', file_out_madre)
+    match.matched_by_name(pparsed, names, 'M', file_out_padre)
     
 
 
