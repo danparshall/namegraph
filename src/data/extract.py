@@ -619,7 +619,7 @@ def fix_mixed_presur_names(nf, name_counts):
 
 
 
-def fix_husband_honorific(nf, rf, funky_prenames):
+def fix_husband_honorific(nf, rf):
     """ Repairs cases when mother's field includes husband's surname as an honorific.
     
     TODO: include fix for when the citizen is a woman using both her surname, and her
@@ -651,7 +651,7 @@ def fix_husband_honorific(nf, rf, funky_prenames):
     # third, re-parse the names and update the original frames
     rf.loc[rf.cedula.isin(ceds_to_fix), 'nombre_madre'] = rf_removed.nombre_madre
     surnames_fixed = rf_removed.apply(lambda row: parse_fullrow(row), axis=1, result_type='expand')
-    nf_fixed, funky_prenames = clean_names(rf_removed, surnames_fixed)
+    nf_fixed, _ = clean_names(rf_removed, surnames_fixed)
     ceds_were_fixed = set(nf_fixed[nf_fixed.nombre.notnull()].cedula)
     cols_fixed = ['nombre', 'prenames', 'nombre_madre', 'sur_madre', 'has_madre', 'is_mlegal', 'nlen_madre', 'n_char_nombre', 'n_char_prenames']
     for col in cols_fixed:
