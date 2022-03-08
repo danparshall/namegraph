@@ -42,12 +42,10 @@ def exact_name_padre(ncleaned_rf):
         'cedula', 'nombre_padre']]
     obv_padres.rename(columns={'cedula': 'ced_kid',
                     'nombre_padre': 'nombre'}, inplace=True)
-    print(obv_padres)
     clean_pads = ncleaned_rf[['nombre', 'cedula', 'dt_birth']].merge(
         obv_padres, on='nombre')
     clean_pads.rename(columns={'cedula': 'ced_pad', 'ced_kid': 'cedula',
                     'dt_birth': 'dt_birth_padre'}, inplace=True)
-    print(clean_pads)
     whoa_papa = ncleaned_rf.merge(
         clean_pads[['cedula', 'ced_pad', 'dt_birth_padre']], how='left', on='cedula')
     print("# poss padre recs :", len(whoa_papa))
@@ -259,11 +257,9 @@ def matched_by_name(parsed, names, gender, file_out):
                     # show the progress if there are a lot of names
                     print(chk_name, len(sub_madres))
                     for par in sub_madres.itertuples(): #tqdm(sub_madres.itertuples()):
-                        print('\npaso', par,'\n')
                         if par.cedula in past:
                             break
                         out = match_madre_namedata(par, sub_citizens)
-                        print('paso_match')
                         results.append((par.cedula, out))
                         past.add(par.cedula)
                         f.write(par.cedula + '\t' + out + '\n')
