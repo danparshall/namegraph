@@ -168,7 +168,7 @@ def best_split_by_evidence(my_pres, row, wts_pre, wts_sur, verbose=False):
     return best_split, flag_split
 
 
-def extract_prename_parent(row, target_col, wts_pre, wts_sur):
+def extract_prename_parent(row, target_col, wts_pre, wts_sur, funky_prenames):
     """ 
     Extract information about the parents
     """
@@ -198,7 +198,7 @@ def extract_prename_parent(row, target_col, wts_pre, wts_sur):
         # name is in normal form; sur2 not present, so everything before sur1 is a prename
         # works even if sur1==sur2
         pres = ''.join(row[target_col].split(sur1)).strip()
-        pname = parse_pres(pres, pname, row)
+        pname = parse_pres(pres, pname, funky_prenames, row)
 
     elif not is_pstart:
         # name is in normal form, sur2 follows sur1, everything before sur1 is a prename
@@ -207,7 +207,7 @@ def extract_prename_parent(row, target_col, wts_pre, wts_sur):
         if len(parts) > 1:
             pname['sur2'] = parts[1]
             pres = row[target_col].split(sur1)[0]
-            pname = parse_pres(pres, pname, row)
+            pname = parse_pres(pres, pname, funky_prenames, row)
         else:
             pname['sur2'] = "WTF MPARSE ERROR"
             pname['flag'] = True
@@ -222,7 +222,7 @@ def extract_prename_parent(row, target_col, wts_pre, wts_sur):
 
         elif is_doubled:
             # special case when sur1 == sur2, only thing to do is figure out the prenames
-            pname = parse_pres(pres, pname, row)
+            pname = parse_pres(pres, pname, funky_prenames, row)
 
         else:
             # harder case.  Could be "sur1 sur2 pre1 pre2 ..." or "sur1 pre1 pre2 ..."
