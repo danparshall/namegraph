@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import click
+click.disable_unicode_literals_warning = True
 import logging
 from pathlib import Path
 #from dotenv import find_dotenv, load_dotenv
@@ -82,7 +83,7 @@ def main(filepath_raw, folder_interim):
 
     padre.to_csv(folder_interim + '/07-padre.tsv', sep='\t', index = False)
     madre.to_csv(folder_interim + '/08-madre.tsv', sep='\t', index=False)
-
+    
     ## BEGIN 4.0
     print("Matching exact names")
     ncleaned_rf = match.merge_ncleaned_rf(nf, rf)
@@ -103,8 +104,8 @@ def main(filepath_raw, folder_interim):
     mparsed = match.parsed(madre, ceds_found_madre)
     pparsed = match.parsed(padre, ceds_found_padre)
 
-    file_out_padre = folder_interim + '/11-MADRES_matched_by_name.tsv'
-    file_out_madre = folder_interim + '/12-PADRES_matched_by_name.tsv'
+    file_out_madre = folder_interim + '/11-MADRES_matched_by_name.tsv'
+    file_out_padre = folder_interim + '/12-PADRES_matched_by_name.tsv'
     match.matched_by_name(mparsed, names, 'F', file_out_madre)
     match.matched_by_name(pparsed, names, 'M', file_out_padre)
     

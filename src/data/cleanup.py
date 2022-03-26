@@ -261,7 +261,7 @@ def fix_nombre(nombre):
         nombre = "-".join(nombre.split("- "))
     return nombre
 
-def load_registry(filepath_raw, logger, N_ROWS=None):
+def load_registry(filepath_raw, logger=None, N_ROWS=None):
 
     rf = pd.read_csv(filepath_raw, sep='\t', encoding='utf-8',
                      parse_dates=utils.get_date_cols(), dtype=utils.get_dtypes_reg(),
