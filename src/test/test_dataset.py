@@ -40,7 +40,7 @@ def main(filepath_raw, folder_interim):
 
     print("Cleaning registry")
     rf = cleanup.clean_nombres(rf, folder_interim)
-    # test.test_data(rf, '../../data/testdata/01-test_cases_cleanup.tsv', utils.get_dtypes_reg(), utils.get_date_cols())
+    test.test_data(rf, '../../data/testdata/01-cleanup.tsv', utils.get_dtypes_reg(), utils.get_date_cols())
 
     print("RF :", len(rf))
     print(rf.shape)  # head())
