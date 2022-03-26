@@ -248,12 +248,10 @@ def matched_by_name(parsed, names, gender, file_out):
                 if pd.isnull(chk_name) or chk_name == '':
                     continue
                 
-                print('\nchk_name:', chk_name)
                 # copying only takes ~15 mins overhead, and probably makes subsequent searching faster.  Do it.
                 sub_citizens = guys[guys.sur_padre == chk_name].copy(deep=True)
                 sub_madres = parsed[parsed.sur1 == chk_name]
-                print(sub_madres.columns)
-                if len(sub_citizens) >= 1: # 1000 but I'm proving on test_data
+                if len(sub_citizens) >= 1:
                     # show the progress if there are a lot of names
                     print(chk_name, len(sub_madres))
                     for par in sub_madres.itertuples(): #tqdm(sub_madres.itertuples()):
@@ -264,19 +262,17 @@ def matched_by_name(parsed, names, gender, file_out):
                         past.add(par.cedula)
                         f.write(par.cedula + '\t' + out + '\n')
         elif gender == 'M':
-            for ind, chk_name in tqdm(enumerate(sorted(count[count >= 1].index))):
-
+            for ind, chk_name in tqdm(enumerate(count[count >= 1].index)):
                 if ind % 1000 == 0:
                     print("  >>>>>>>>>>>> ITER " + str(ind))
 
                 if pd.isnull(chk_name) or chk_name == '':
-                    continue
-
+                    continue 
+                                   
                 # copying only takes ~15 mins overhead, and probably makes subsequent searching faster.  Do it.
                 sub_citizens = guys[guys.sur_padre == chk_name].copy(deep=True)
                 sub_padres = parsed[parsed.sur1 == chk_name]
-
-                if len(sub_citizens) >= 1000:  # 1000 but I'm proving on test_data
+                if len(sub_citizens) >= 1:
                     # show the progress if there are a lot of names
                     print(chk_name, len(sub_padres))
                     for par in tqdm(sub_padres.itertuples()):
