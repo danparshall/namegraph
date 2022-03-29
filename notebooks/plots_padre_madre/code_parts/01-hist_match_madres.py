@@ -21,13 +21,13 @@ data_madres['num_matches'] = pd.to_numeric(
 # Including 0
 plt.figure(0)
 plt.hist(data_madres['num_matches'], edgecolor='black',
-         bins=[-0.5, 0.5, 1.5, 5, 10, 20, 40, 60, 80, 100, 1000])
+         bins=[-0.5, 0.5, 1.5, 5, 10, 20, 40, 60, 80, 100])
 plt.title('Number of matching madres, Including 0')
-plt.savefig(main.format("plots/num_matchs_madres_with_0"), dpi = 200)
+plt.savefig(main.format("plots/num_matchs_madres_with_0_until_100"), dpi = 200)
 
 # Not including 0
 plt.figure(1)
 plt.hist(data_madres['num_matches'], edgecolor='black' ,
-          bins=[0.5, 1.5, 5, 10, 20, 40, 60, 80, 100, 1000])
+          bins=[0.5, 1.5, 5, 10, 20, 40, 60, 80, 100])
 plt.title('Number of matching madres, Not including 0')
-plt.savefig(main.format("plots/num_matchs_madres_without_0"), dpi=200)
+plt.savefig(main.format("plots/num_matchs_madres_without_0_until_100"), dpi=200)
