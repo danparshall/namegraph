@@ -35,6 +35,30 @@ def merge_ncleaned_rf(nf, rf):
     return merging
 
 
+def match_by_cedula_madre(names_padre):
+    names_padre = names_padre[["cedula", "ced_madre"]].copy()
+    names_padre["exists"] = names_padre.drop(
+        "target", 1).isin(names_padre["target"]).any(1)
+    # what to do when a madre is not in the dataset but yes in "ced_madre"
+    names_padre = names_padre[not names_padre['ced_madre'].isna()]
+    return names_padre
+    
+
+def match_by_cedula_madre(names_madre):
+    names_madre = names_madre[["cedula", "ced_madre"]].copy()
+    names_madre["exists"] = names_madre.drop(
+        "target", 1).isin(names_madre["target"]).any(1)
+    # what to do when a madre is not in the dataset but yes in "ced_madre"
+    names_madre = names_madre[not names_madre['ced_madre'].isna()]  
+    return names_madre
+
+
+def match_by_cedula(names):
+    match_by_cedula_padre = match_by_cedula_padre(names)
+    match_by_cedula_madre = match_by_cedula_madre(names)
+    return match_by_cedula_padre, match_by_cedula_madre
+
+
 def exact_name_padre(ncleaned_rf):
     """ Matches padres with four part names, legal and no legal forms
 
