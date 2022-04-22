@@ -1,12 +1,9 @@
 import pathlib
 import networkit as nk
-dir_name = 'D:/Windows/OneDrive - Universidad del rosario/initial_graph_repository/tareas/graph/'
-base_filename = 'Amazon0302.txt'
+dir_name = '/home/juan.russy/shared/proof_run_FamNet/interim/'
+base_filename = 'PROOF_GRAPH_matched_exact_name.txt'
 filename = dir_name + base_filename
 print(filename)
-# with open(dir_name + base_filename) as f:
-#     lines = f.readlines()
-# print(lines[:10])
 
 nk.engineering.setNumberOfThreads(2)
 g = nk.graphio.EdgeListReader(separator = '\t', firstNode = 0, continuous = True, directed = True).read(filename)
