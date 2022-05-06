@@ -22,4 +22,4 @@ print(matched_exact_name.shape)
 print(matched_exact_name.head(10))
 
 matched_exact_name.to_csv(dir_name + 'PROOF_GRAPH_matched_exact_name.txt',
-                          header=True, index=None, sep=' ', mode='a')
+                          header=False, index=None, sep='\t', mode='a')
