@@ -85,10 +85,19 @@ def main(filepath_raw, folder_interim):
     madre.to_csv(folder_interim + '/08-madre.tsv', sep='\t', index=False)
     
     ## BEGIN 4.0
-    print("Matching exact names")
     ncleaned_rf = match.merge_ncleaned_rf(nf, rf)
 
-    matched_padres, matched_madres = match.exact_name(ncleaned_rf)
+    print("Matching records with cedulas")
+    match_by_cedula_padre = match.match_by_cedula_padre(ncleaned_rf)
+    match_by_cedula_madre = match.match_by_cedula_madre(ncleaned_rf)
+    match_by_cedula_padre.to_csv(folder_interim + '/09-match_by_cedula_padres.tsv', 
+                                 sep='\t', index=False)
+    match_by_cedula_madre.to_csv(folder_interim + '/10-match_by_cdeula_madres.tsv',
+                                 sep='\t', index=False)
+
+    print("Matching exact names")
+    matched_padres, matched_madres = match.exact_name(
+        ncleaned_rf, match_by_cedula_padre, match_by_cedula_madre)
     matched_padres.to_csv(
         folder_interim + '/09-matched_padres.tsv', sep='\t', index=False)
     matched_madres.to_csv(
