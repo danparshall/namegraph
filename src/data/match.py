@@ -35,12 +35,12 @@ def merge_ncleaned_rf(nf, rf):
     return merging
 
 
-def match_by_cedula_madre(names_padre):
-    names_padre = names_padre[["cedula", "ced_madre"]].copy()
+def match_by_cedula_padre(names_padre):
+    names_padre = names_padre[["cedula", "ced_padre"]].copy()
     names_padre["exists"] = names_padre.drop(
         "target", 1).isin(names_padre["target"]).any(1)
     # what to do when a madre is not in the dataset but yes in "ced_madre"
-    names_padre = names_padre[not names_padre['ced_madre'].isna()]
+    names_padre = names_padre[not names_padre['ced_padre'].isna()]
     return names_padre
     
 
@@ -51,12 +51,6 @@ def match_by_cedula_madre(names_madre):
     # what to do when a madre is not in the dataset but yes in "ced_madre"
     names_madre = names_madre[not names_madre['ced_madre'].isna()]  
     return names_madre
-
-
-def match_by_cedula(names):
-    match_by_cedula_padre = match_by_cedula_padre(names)
-    match_by_cedula_madre = match_by_cedula_madre(names)
-    return match_by_cedula_padre, match_by_cedula_madre
 
 
 def exact_name_padre(ncleaned_rf):
@@ -181,9 +175,24 @@ def exact_name_madre(ncleaned_rf):
     return dm
 
 
-def exact_name(n_cleaned):
-    matched_padres = exact_name_padre(n_cleaned)
-    matched_madres = exact_name_madre(n_cleaned)
+def exact_name(n_cleaned, match_by_cedula_padre, match_by_cedula_madre):
+    """ Matching exact names (two prenames and two surnames)
+
+    Args:
+        n_cleaned:  Dataframe cleaned in merge_ncleaned_rf() function
+        match_by_cedula_padre: matching padres records with cedulas
+        match_by_cedula_madre: matching madres records with cedulas
+
+    Return:
+        matched_padres: Exact name matching of padres without cedula
+        matched_madres: Exact name matching of madres without cedula
+    """
+    n_cleaned_padres = n_cleaned[~n_cleaned['cedula'].isin(
+        match_by_cedula_padre['cedula'])]
+    n_cleaned_madres = n_cleaned[~n_cleaned['cedula'].isin(
+        match_by_cedula_madre['cedula'])]
+    matched_padres = exact_name_padre(n_cleaned_padres)
+    matched_madres = exact_name_madre(n_cleaned_madres)
     return matched_padres, matched_madres
 
 
@@ -191,9 +200,12 @@ def create_names(parsed, rf):
     """ Generate clean dataframe for the partial name matching process """
     parsed = parsed.astype(utils.get_dtypes_names())
 
-    # for col in utils.get_cols_cat():
-    #     parsed[col].cat.add_categories('', inplace=True)
-    #     parsed[col].fillna('', inplace=True)
+    try:
+        for col in utils.get_cols_cat():
+            parsed[col].cat.add_categories('', inplace=True)
+            parsed[col].fillna('', inplace=True)
+    except:
+        pass
 
     parsed['junk'].fillna('', inplace=True)
     names = parsed.merge(rf, on='cedula', how='left')
