@@ -85,10 +85,26 @@ def main(filepath_raw, folder_interim):
     madre.to_csv(folder_interim + '/08-madre.tsv', sep='\t', index=False)
     
     ## BEGIN 4.0
-    print("Matching exact names")
     ncleaned_rf = match.merge_ncleaned_rf(nf, rf)
 
-    matched_padres, matched_madres = match.exact_name(ncleaned_rf)
+    print("Matching records with cedulas")
+    match_by_cedula_padre = match.match_by_cedula_padre(ncleaned_rf)
+    match_by_cedula_madre = match.match_by_cedula_madre(ncleaned_rf)
+    match_by_cedula_padre.to_csv(folder_interim + '/09-match_by_cedula_padres.tsv', 
+                                 sep='\t', index=False)
+    match_by_cedula_madre.to_csv(folder_interim + '/10-match_by_cedula_madres.tsv',
+                                 sep='\t', index=False)
+
+    ceds_found_padre_cedula = match.ceds_found(
+        ncleaned_rf, 'ced_padre', only_cedula = True)
+    ceds_found_madre_cedula = match.ceds_found(
+        ncleaned_rf, 'ced_madre', only_cedula=True)
+
+    print("Matching exact names")
+    matched_padres = match.exact_name_padre(
+        ncleaned_rf, ceds_found_padre_cedula)
+    matched_madres = match.exact_name_madre(
+        ncleaned_rf, ceds_found_madre_cedula)
     matched_padres.to_csv(
         folder_interim + '/09-matched_padres.tsv', sep='\t', index=False)
     matched_madres.to_csv(
@@ -98,8 +114,10 @@ def main(filepath_raw, folder_interim):
     print("Matching partial")
     names = match.create_names(parsed, rf)
     # Guys that has ced_padre or ced_madre
-    ceds_found_madre = match.ceds_found(names, matched_madres, 'ced_madre')
-    ceds_found_padre = match.ceds_found(names, matched_padres, 'ced_padre')
+    ceds_found_madre = match.ceds_found(
+        names, 'ced_madre', matched_madres)
+    ceds_found_padre = match.ceds_found(
+        names, 'ced_padre', matched_padres)
 
     mparsed = match.parsed(madre, ceds_found_madre)
     pparsed = match.parsed(padre, ceds_found_padre)
