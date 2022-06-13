@@ -1,7 +1,7 @@
 import pathlib
 import networkit as nk
-dir_name = 'D:/Windows/OneDrive - Universidad del rosario/initial_graph_repository/tareas/graph/'
-base_filename = 'Amazon0302.txt'
+dir_name = ''
+base_filename = ""
 filename = dir_name + base_filename
 print(filename)
 # with open(dir_name + base_filename) as f:
