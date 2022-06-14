@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 
 # Paths
-dir_name = ''
-base_filename = ''
+dir_name = '/home/juan.russy/shared/proof_run_FamNet/interim/'
+base_filename = 'PROOF_GRAPH_matched_exact_name.txt'
 filename = dir_name + base_filename
 print(filename)
 
@@ -13,6 +13,12 @@ print('Read EdgeList')
 reader = nk.graphio.EdgeListReader(  # 'graphio' object
     separator='\t', firstNode=0, continuous=False, directed=False)
 G = reader.read(filename)  # 'graph' object
+
+def path_arrange(path):
+    if len(path) == 1:
+        return path
+    else:
+        return path[: path.rfind('-')] + '-S'
 
 print('Node separation')
 def NodeMaxDegreeSeparation(NODE, MAX_DEGREE):
@@ -29,7 +35,7 @@ def NodeMaxDegreeSeparation(NODE, MAX_DEGREE):
         of the nodes that follow the MAX_DEGREE rule
     """
     visited = set()  # Nodes that have been visited
-    path = 'R-{}-S'.format(NODE)  # Initial path
+    path = 'R'  # Initial path
     degree_separation = 0  # Initial degree of separation
 
     # Queue's
@@ -55,11 +61,6 @@ def NodeMaxDegreeSeparation(NODE, MAX_DEGREE):
         degree = queue_degree.pop(0)
         temp_path = queue_path.pop(0)
 
-        print('-'*50)
-        print('node', node)
-        print('degree', degree)
-        print('Path', temp_path)
-
         # Append that information
         all_names.append(node)
         all_degrees.append(degree)
@@ -75,9 +76,11 @@ def NodeMaxDegreeSeparation(NODE, MAX_DEGREE):
                 if neighbor not in visited:
                     queue_name.append(neighbor)
                     queue_degree.append(degree + 1)
-                    path = temp_path[:-2] + '-' + str(neighbor) + temp_path[-2:]
+                    path = temp_path + '-' + str(neighbor)
                     queue_path.append(path)
+                    visited.add(neighbor)
     
+    all_paths = list(map(lambda path: path_arrange(path), all_paths))
     # Generate dataframe from the ALL lists
     info_nodes_df = pd.DataFrame(
         {'node_name': all_names, 'degree_separation': all_degrees, 'path': all_paths})
