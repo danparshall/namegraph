@@ -92,11 +92,14 @@ def main(filepath_raw, folder_interim):
     print("Matching records with cedulas")
     match_by_cedula_padre = match.match_by_cedula_padre(ncleaned_rf)
     match_by_cedula_madre = match.match_by_cedula_madre(ncleaned_rf)
+    match_by_cedula_spouse = match.match_by_cedula_spouse(ncleaned_rf)
     match_by_cedula_padre.to_csv(folder_interim + '/09-match_by_cedula_padres.tsv', 
                                  sep='\t', index=False)
     match_by_cedula_madre.to_csv(folder_interim + '/10-match_by_cedula_madres.tsv',
                                  sep='\t', index=False)
-    del match_by_cedula_madre, match_by_cedula_padre
+    match_by_cedula_spouse.to_csv(folder_interim + '/15-match_by_cedula_spouse.tsv', 
+                                 sep='\t', index=False)
+    del match_by_cedula_madre, match_by_cedula_padre, match_by_cedula_spouse
 
     ceds_found_padre_cedula = match.ceds_found(
         ncleaned_rf, 'ced_padre', only_cedula = True)

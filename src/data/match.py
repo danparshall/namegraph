@@ -47,6 +47,12 @@ def match_by_cedula_madre(names_madre):
     return names_madre
 
 
+def match_by_cedula_spouse(names_spluse):
+    names_spluse = names_spluse[["cedula", "ced_spouse"]].copy()
+    names_spluse = names_spluse[names_spluse['ced_spouse'] != '']
+    return names_spluse
+
+
 def exact_name_padre(ncleaned, ceds_found):
     """ Matches padres with four part names, legal and no legal forms
 
