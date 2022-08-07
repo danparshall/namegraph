@@ -36,6 +36,19 @@ _dtypes_padres = {'cedula': str, 'sur1': str, 'sur2': str, 'pre1': str,
              'pre2': str, 'pre3': str, 'junk': str, 'flag': bool
              }
 
+# match.py
+_dtypes_names = {'cedula': str, 'sur_padre': 'category', 'sur_madre': 'category',
+                 'pre1': 'category', 'pre2': 'category', 'pre3': 'category',
+                 'junk': str, 'nlen': int}
+
+_cols_cat = ['sur_padre', 'sur_madre', 'pre1', 'pre2', 'pre3']
+
+_cols_cat_parsed = ['sur1', 'sur2', 'pre1', 'pre2', 'pre3']
+
+_dtypes_parsed = {'cedula': str, 'sur1': 'category', 'sur2': 'category',
+                'pre1': 'category', 'pre2': 'category', 'pre3': 'category',
+                'junk': str}
+
 # Google's style guide recommend to call globals through public module-level functions
 def get_nan_values():
     return _nan_values
@@ -63,3 +76,15 @@ def get_dtypes_newfreqfile():
 
 def get_dtypes_padres():
     return _dtypes_padres
+
+def get_dtypes_names():
+    return _dtypes_names
+
+def get_cols_cat():
+    return _cols_cat
+
+def get_cols_cat_parsed():
+    return _cols_cat_parsed
+
+def get_dtypes_parsed():
+    return _dtypes_parsed

@@ -1,50 +1,66 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
+from tqdm.auto import tqdm
+import utils
 
-def merge_ncleaned_rf(names_cleaned, rf):
+def merge_ncleaned_rf(nf, rf):
+    """ Merge names_cleaned dataframe with rf dataframe """
     for col in ['nombre_spouse', 'ced_spouse', 'ced_madre', 'ced_padre']:
         rf[col] = rf[col].fillna('')
     
-    names_cleaned.loc[names_cleaned.sur_padre.isnull(), 'sur_padre'] = ""
-    names_cleaned.loc[names_cleaned.sur_madre.isnull(), 'sur_madre'] = ""
-    names_cleaned.loc[names_cleaned.prenames.isnull(), 'prenames'] = ""
-    names_cleaned['nlen_pre'] = names_cleaned.prenames.map(lambda x: len(x.split()))
-    names_cleaned['is_plegal'] = names_cleaned.is_plegal.map(
+    nf.loc[nf.sur_padre.isnull(), 'sur_padre'] = ""
+    nf.loc[nf.sur_madre.isnull(), 'sur_madre'] = ""
+    nf.loc[nf.prenames.isnull(), 'prenames'] = ""
+    nf['nlen_pre'] = nf.prenames.map(lambda x: len(x.split()))
+    nf['is_plegal'] = nf.is_plegal.map(
         lambda x: np.nan if x is np.nan else bool(x))
-    names_cleaned['is_mlegal'] = names_cleaned.is_mlegal.map(
+    nf['is_mlegal'] = nf.is_mlegal.map(
         lambda x: np.nan if x is np.nan else bool(x))
-    names_cleaned.drop(['n_char_nombre', 'n_char_prenames', 'nlen_pre'], axis=1, inplace=True)
+    nf.drop(['n_char_nombre', 'n_char_prenames', 'nlen_pre'], axis=1, inplace=True)
 
     usecols = ['cedula', 'dt_birth', 'dt_death', 'dt_marriage',
                'nombre_spouse', 'ced_spouse', 'ced_padre', 'ced_madre']
     cols_reg = usecols[1:]
 
     for col in cols_reg:
-        if col in names_cleaned.columns:
-            del names_cleaned[col]
+        if col in nf.columns:
+            del nf[col]
 
-    return names_cleaned.merge(rf, how = 'left', on = 'cedula')
+    merging = nf.merge(rf, how='left', on='cedula')
+
+    merging.rename(columns = {'nombre_x': 'nombre', 'gender_x':'gender', 'nombre_padre_x': 'nombre_padre', 
+                            'nombre_madre_x': 'nombre_madre'}, inplace = True)
+
+    return merging
 
 
 def exact_name_padre(ncleaned_rf):
+    """ Matches padres with four part names, legal and no legal forms
+
+    Args:
+        ncleaned_rf     : Dataframe cleaned in merge_ncleaned_rf() function
+    
+    Returns:
+        dp              : Dataframe with the list of matches for four part names
+    """
     MIN_PARENT_AGE = 12
 
-    # Exact four part names
-    obv_padres = ncleaned_rf[ncleaned_rf.has_padre & ncleaned_rf.is_plegal & (ncleaned_rf.nlen_padre == 4)][[
-        'cedula', 'nombre_padre']]
-    obv_padres.rename(columns={'cedula': 'ced_kid',
-                    'nombre_padre': 'nombre'}, inplace=True)
-
+    # Exact four part names with legal form
+    obv_padres = ncleaned_rf[ncleaned_rf.has_padre & ncleaned_rf.is_plegal & 
+                            (ncleaned_rf.nlen_padre == 4)][['cedula', 'nombre_padre']]
+    obv_padres.rename(columns={ 'cedula': 'ced_kid', 'nombre_padre': 'nombre'}, 
+                      inplace=True)
+    # Padres matched by exact four part name
     clean_pads = ncleaned_rf[['nombre', 'cedula', 'dt_birth']].merge(
-        obv_padres, on='nombre')
-    clean_pads.rename(columns={'cedula': 'ced_pad', 'ced_kid': 'cedula',
-                    'dt_birth': 'dt_birth_padre'}, inplace=True)
-    
+                            obv_padres, on='nombre')
+    clean_pads.rename(columns={ 'cedula': 'ced_pad', 'ced_kid': 'cedula',
+                                'dt_birth': 'dt_birth_padre'}, inplace=True)
+    # Merge with the dataframe that contains all the information
     whoa_papa = ncleaned_rf.merge(
         clean_pads[['cedula', 'ced_pad', 'dt_birth_padre']], how='left', on='cedula')
     print("# poss padre recs :", len(whoa_papa))
-
+    # Verify MIN_PARENT_AGE condition and not duplicated
     valid_matched_padres = whoa_papa[~whoa_papa.duplicated(['cedula'], keep=False)
                                      & (whoa_papa.ced_pad.notnull())
                                      & (whoa_papa.dt_birth > whoa_papa.dt_birth_padre + dt.timedelta(365.26 * MIN_PARENT_AGE))
@@ -80,7 +96,15 @@ def exact_name_padre(ncleaned_rf):
     return dp
 
 
-def exact_name_padre(ncleaned_rf):
+def exact_name_madre(ncleaned_rf):
+    """ Matches madres with four part names, legal and no legal forms
+
+    Args:
+        ncleaned_rf     : Dataframe cleaned in merge_ncleaned_rf() function
+    
+    Returns:
+        dm              : Dataframe with the list of matches for four part names
+    """
     MIN_PARENT_AGE = 12
 
     # Exact four part names
@@ -131,3 +155,179 @@ def exact_name_padre(ncleaned_rf):
     dm = pd.concat([m1, m2], axis=0)
 
     return dm
+
+
+def exact_name(n_cleaned):
+    matched_padres = exact_name_padre(n_cleaned)
+    matched_madres = exact_name_madre(n_cleaned)
+    return matched_padres, matched_madres
+
+
+def create_names(parsed, rf):
+    """ Generate clean dataframe for the partial name matching process """
+    parsed = parsed.astype(utils.get_dtypes_names())
+
+    # for col in utils.get_cols_cat():
+    #     parsed[col].cat.add_categories('', inplace=True)
+    #     parsed[col].fillna('', inplace=True)
+
+    parsed['junk'].fillna('', inplace=True)
+    names = parsed.merge(rf, on='cedula', how='left')
+
+    return names
+
+def ceds_found(names, matched, ced_parent):
+    """ People with padre or madre cedula or exact name matched
+
+    Args:
+        names       : Clean dataframe generated by create_names()  
+        matched     : Exact name matches generated by exact_name()
+        ced_parent  : 'ced_madre' or 'ced_padre'
+    
+    Returns:
+        ceds_found  : cedulas with padre or madre cedula or exact name matched
+    """
+    nm = names.cedula.isin(set(matched.cedula))
+    ced = (names[ced_parent] != '')
+    ceds_found = set(names[nm | ced ].cedula)
+    return ceds_found
+
+def parsed(parent, ceds_found):
+    """ List people without padre or madre cedula or exact name matching
+    
+    Args:
+        parent      : prenames and surnames of all padres or madres
+        ceds_found  : cedulas with padre or madre cedula or exact name matched
+
+    Returns:
+        parsed      : cedulas that are not contained in ceds_found list
+    """
+    parent = parent.astype(utils.get_dtypes_parsed())
+
+    # for col in utils.get_cols_cat_parsed():
+    #     parent[col].cat.add_categories('', inplace=True)
+    # parent.fillna('', inplace=True)
+    parsed = parent[~parent.cedula.isin(ceds_found)]
+
+    return parsed
+
+def match_padre_namedata(par, sub):
+    if par.sur2:
+        sub = sub[sub.sur_madre == par.sur2]
+
+    # if we have 2 prenames, use them in sequence
+    if par.pre2:
+        sub = sub[(sub.pre1 == par.pre1) & (sub.pre2 == par.pre2)]
+
+    # if we only have 1 prename, it might be in either column
+    if par.pre1:
+        sub = sub[(sub.pre1 == par.pre1) | (sub.pre2 == par.pre1)]
+
+    # check mother's name against candidate's spouse
+    if (len(sub) > 1) and par.sur2:
+        tmp = sub[sub.nombre_spouse.map(lambda x: par.sur2 in x)]
+        if len(tmp) > 0:
+            return "MAMAS: " + ';'.join(list(set(tmp.cedula)))
+
+    # return results
+    if len(sub) == 0:
+        return ''
+    elif len(sub) == 1:
+        return sub.iloc[0].cedula
+    elif len(sub) < 100:
+        return ';'.join(list(set(sub.cedula)))
+    else:
+        return "Found {0} options".format(len(sub))
+
+
+def match_madre_namedata(par, sub):
+
+    if par.sur2:
+        sub = sub[sub.sur_madre == par.sur2]
+
+    # if we have 2 prenames, use them in sequence
+    if par.pre2:
+        sub = sub[(sub.pre1 == par.pre1) & (sub.pre2 == par.pre2)]
+
+    # if we only have 1 prename, it might be in either column
+    if par.pre1:
+        sub = sub[(sub.pre1 == par.pre1) | (sub.pre2 == par.pre1)]
+
+    # check father's name against candidate's spouse
+    if (len(sub) > 1) and par.sur1:
+        tmp = sub[sub.nombre_spouse.map(lambda x: par.sur1 in x)]
+        if len(tmp) > 0:
+            return "PAPAS: " + ';'.join(list(set(tmp.cedula)))
+
+    # return results
+    if len(sub) == 0:
+        return ''
+    elif len(sub) == 1:
+        return sub.iloc[0].cedula
+    elif len(sub) < 100:
+        return ';'.join(list(set(sub.cedula)))
+    else:
+        return "Found {0} options".format(len(sub))
+
+def matched_by_name(parsed, names, gender, file_out):
+    """ Generates dataframe of partial name matching
+    
+    Args:
+        parsed      : cedulas without padre or madre cedula or exact name matching,
+                      generated by parsed()
+        names       : Clean dataframe generated by create_names()  
+        gender      : 'F' or 'M'
+        file_out    : Path of the output file
+    
+    Returns:
+        Functions writes the partial name matching dataframe but does not return any variable.
+    """
+    guys = names[names.gender == gender]
+    print('guys_columns',guys.columns)
+    count = parsed.sur1.value_counts()
+
+    with open(file_out, 'wt') as f:
+        results = []
+        past = set()
+        if gender == 'F':
+            for ind, chk_name in enumerate(count[count >= 1].index):#tqdm(enumerate(count[count >= 1].index)):
+
+                if ind % 1000 == 0:
+                    print("  >>>>>>>>>>>> ITER " + str(ind))
+                if pd.isnull(chk_name) or chk_name == '':
+                    continue
+                
+                # copying only takes ~15 mins overhead, and probably makes subsequent searching faster.  Do it.
+                sub_citizens = guys[guys.sur_padre == chk_name].copy(deep=True)
+                sub_madres = parsed[parsed.sur1 == chk_name]
+                if len(sub_citizens) >= 1:
+                    # show the progress if there are a lot of names
+                    print(chk_name, len(sub_madres))
+                    for par in sub_madres.itertuples(): #tqdm(sub_madres.itertuples()):
+                        if par.cedula in past:
+                            break
+                        out = match_madre_namedata(par, sub_citizens)
+                        results.append((par.cedula, out))
+                        past.add(par.cedula)
+                        f.write(par.cedula + '\t' + out + '\n')
+        elif gender == 'M':
+            for ind, chk_name in tqdm(enumerate(count[count >= 1].index)):
+                if ind % 1000 == 0:
+                    print("  >>>>>>>>>>>> ITER " + str(ind))
+
+                if pd.isnull(chk_name) or chk_name == '':
+                    continue 
+                                   
+                # copying only takes ~15 mins overhead, and probably makes subsequent searching faster.  Do it.
+                sub_citizens = guys[guys.sur_padre == chk_name].copy(deep=True)
+                sub_padres = parsed[parsed.sur1 == chk_name]
+                if len(sub_citizens) >= 1:
+                    # show the progress if there are a lot of names
+                    print(chk_name, len(sub_padres))
+                    for par in tqdm(sub_padres.itertuples()):
+                        if par.cedula in past:
+                            break
+                        out = match_padre_namedata(par, sub_citizens)
+                        results.append((par.cedula, out))
+                        past.add(par.cedula)
+                        f.write(par.cedula + '\t' + out + '\n')

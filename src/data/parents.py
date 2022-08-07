@@ -3,7 +3,17 @@ import re
 import numpy as np
 
 def parse_pres(pres, pname, funky_prenames, row=None):
+    """ Divide padre or madre prenames, used when the name is in normal form (prenames then surnames)
 
+    Args:
+        pres            : prenames before surname 1
+        pname           : row with the information of the padre or madre
+        funky_prenames  : list of multi-token prenames
+        row             : contains the information of the person in nf dataframe
+    
+    Returns:
+        pname           : updated row with the information of padre or madre's prenames
+    """
     if len(pres.split()) == 1:
         pname['pre1'] = pres
     elif len(pres.split()) == 2:
@@ -13,7 +23,6 @@ def parse_pres(pres, pname, funky_prenames, row=None):
         if len(pres) == 0:
             print(
                 "WTF at {0} - PRES: {1} PNAME: {2}".format(row.cedula, pres, pname))
-            pass
         else:
             pname['pre1'] = pres[0]
             if len(pres) > 1:
@@ -21,7 +30,7 @@ def parse_pres(pres, pname, funky_prenames, row=None):
                 if len(pres) > 2:
                     pname['pre3'] = pres[2]
                     if len(pres) > 3:
-                        pname['junk'] = ' '.join(pres[4:])
+                        pname['junk'] = ' '.join(pres[3:])
     return pname
 
 
@@ -117,6 +126,21 @@ def get_ending_multimatch(nombre):
     return ""
 
 def wts(allnames):
+    """ Generates the relations between observed name and ratios
+
+    Args:
+        allnames    : Dataframe with the counts of each observed name.
+
+    Returns:
+        wts         : Dictionary with the information of the observed name ratios.
+    
+    NOTE:
+    Two important columns:
+    - pratio = n_pre / n_sur
+    - sratio = n_sur / n_pre
+    Where n_pre is the number of times the observation is a prename and 
+    n_sur is the number of times the observation is a surname.
+    """
     wts_pre = dict()
     wts_sur = dict()
 
@@ -168,9 +192,18 @@ def best_split_by_evidence(my_pres, row, wts_pre, wts_sur, verbose=False):
     return best_split, flag_split
 
 
-def extract_prename_parent(row, target_col, wts_pre, wts_sur):
-    """ 
-    Extract information about the parents
+def extract_prename_parent(row, target_col, wts_pre, wts_sur, funky_prenames):
+    """ Extract information about the parents
+    
+    Args:
+        row             : contains the information of the person in nf dataframe
+        target_col      : 'nombre_padre' or 'nombre_madre'
+        wts_pre         : dictionary with prename ratios, see wts function
+        wts_sur         : dictionary with surname ratios, see wts function
+        funky_prenames  : list of multi-token prenames
+
+    Returns:
+        pname           : row with the information of the padre or madre
     """
     target_sur = 'sur_' + target_col.split("_")[1]
     sur1 = row[target_sur]
@@ -179,7 +212,7 @@ def extract_prename_parent(row, target_col, wts_pre, wts_sur):
              'pre2': "", 'pre3': "", 'junk': "", 'flag': False}
 
     # use direct string-count method, to handle "DE LA CRUZ", etc
-    n_dup = row[target_col].count(sur1)
+    n_dup = row[target_col].split().count(sur1)
     if n_dup > 2:
         print("ERROR COUNTING DUPS :", row)
         # there's also "CHEN CHEN SHU CHEN"
@@ -191,30 +224,33 @@ def extract_prename_parent(row, target_col, wts_pre, wts_sur):
     if is_doubled:
         pname['sur2'] = sur1
 
-    is_pstart = row[target_col].startswith(sur1)
-    is_pend = row[target_col].endswith(sur1)
+    # Only identifies when starts or ends the whole word
+    is_pstart = row[target_col].strip().startswith(sur1 + " ")
+    is_pend = row[target_col].strip().endswith(" " + sur1)
 
     if is_pend:
         # name is in normal form; sur2 not present, so everything before sur1 is a prename
         # works even if sur1==sur2
-        pres = ''.join(row[target_col].split(sur1)).strip()
-        pname = parse_pres(pres, pname, row)
+        pres = ''.join(row[target_col].split(" " + sur1 + " ")).strip()
+        pname = parse_pres(pres, pname, funky_prenames, row)
 
     elif not is_pstart:
         # name is in normal form, sur2 follows sur1, everything before sur1 is a prename
-        parts = [x.strip() for x in row[target_col].split(sur1, maxsplit=1)]
+        # "LEONOR CAMILA LEON CASTRO" only identifies the whole word LEON 
+        parts = [x.strip() for x in row[target_col].split(" " + sur1 + " ", maxsplit=1)]
 
         if len(parts) > 1:
             pname['sur2'] = parts[1]
-            pres = row[target_col].split(sur1)[0]
-            pname = parse_pres(pres, pname, row)
+            pres = parts[0]
+            pname = parse_pres(pres, pname, funky_prenames, row)
         else:
             pname['sur2'] = "WTF MPARSE ERROR"
             pname['flag'] = True
 
     elif is_pstart:
         # name is in legal form, could be short or long version
-        pres = ''.join(row[target_col].split(sur1)).strip()
+        # "LEON GONZALES LEONOR CARLOS" only split the first
+        pres = ''.join(row[target_col].split(sur1 + " ")).strip()
 
         if len(pres.split()) == 1:
             # easy case, only thing left must be the prename
@@ -222,7 +258,7 @@ def extract_prename_parent(row, target_col, wts_pre, wts_sur):
 
         elif is_doubled:
             # special case when sur1 == sur2, only thing to do is figure out the prenames
-            pname = parse_pres(pres, pname, row)
+            pname = parse_pres(pres, pname, funky_prenames, row)
 
         else:
             # harder case.  Could be "sur1 sur2 pre1 pre2 ..." or "sur1 pre1 pre2 ..."

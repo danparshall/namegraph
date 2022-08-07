@@ -91,16 +91,13 @@ def get_compound_names(folder_interim):
     """
 
     compound_names = set()
-    filepath = os.path.join(folder_interim, 'allnames.tsv')
+    filepath = os.path.join(folder_interim, '04-allnames.tsv')
     if os.path.exists(filepath):
     # we check if an "allnames" file has already been produced, and apply the regexes if so.
         allnames = pd.read_csv(filepath, sep='\t', keep_default_na=False, na_values=utils.get_nan_values())
 
         # NOTE: expands the set of compound names as a side effect
         allnames.obsname.map(lambda x: regex_compound_names(x, compound_names))
-    else:
-    # but even if not, we will proceed; there are plenty of hand-crafted ones to use
-        pass
 
     # found by hand in NB 3.0; not sure if I should do something with them here
     longnames = { "GOMEZ DE LA TORRE", "SOLANO DE LA SALA", "MARQUEZ DE LA PLATA", "ESPINOZA DE LOS MONTEROS",
@@ -128,12 +125,14 @@ def get_compound_names(folder_interim):
     others = {"MONTES DE OCA", "ROMO LEROUX", 'SAENZ DE VITERI', "FERNANDEZ DE CORDOVA", "FLORES DE VALGAZ",
                 'DI LUCA', 'VARGAS MACHUCA', 'DIAZ GRANADOS', 'SIG TU', 'MAN GING', 'DE LA FE', "DE BERAS",
                 "DE BOYER DE CAMPRIEU", "DEL NINO JESUS", "DE EL CISNE", "DE EL ROCIO", "DE LA FE", 'DE SAN JOSE', 
-                'DE SANTA ANA', 'DEL LOS ANGELES', 
-                "DE LA CUEVA", "RUIZ ESCODA", "DEL BOSQUE", "DE LA MORA", "DEL ARCO", "DEL CORRAL", "DE LA HOZ",
+                'DE SANTA ANA', 'DEL LOS ANGELES',
+    }    
+    # All of the compound names on the test data (comment to prove test_dataset.py)
+    test_data = {"DE LA CUEVA", "RUIZ ESCODA", "DEL BOSQUE", "DE LA MORA", "DEL ARCO", "DEL CORRAL", "DE LA HOZ",
                 "DE LA OSSA", "DE LOS RIOS", "DEL ROZAL", "DE LAS CASAS", "DE LA CRUZ", "DE LA RENTA", "DE VIGO",
                 "DEL CORAL", "DE LA ROCHE", "DE LA ESPRIELLA", "DE LA GUARDIA", "DEL PINO", 
-             }
-    compound_names = sorted(compound_names|longnames|y_names|dedications|others, key=len, reverse=True)
+                 }  
+    compound_names = sorted(compound_names|longnames|y_names|dedications|others|test_data, key=len, reverse=True)
     return compound_names
 
 
@@ -260,12 +259,22 @@ def fix_nombre(nombre):
         nombre = "-".join(nombre.split("- "))
     return nombre
 
-def load_registry(filepath_raw, logger, N_ROWS=None):
+def load_registry(filepath_raw, logger=None, N_ROWS=None):
+    """ Load original dataset with family information
 
+    Args:
+        filepath_raw    : path with original dataframe file
+        logger
+        NROWS           : Argument for number of rows in read_csv
+
+    Returns:
+        rf              : original dataframe with each columns type configured
+    """
     rf = pd.read_csv(filepath_raw, sep='\t', encoding='utf-8',
-                     parse_dates=utils.get_date_cols(), dtype=utils.get_dtypes_reg(),
+                     parse_dates=utils.get_date_cols(), 
+                     dtype=utils.get_dtypes_reg(),
                      keep_default_na=False, na_values=utils.get_nan_values(),
-                     nrows=N_ROWS,
+                     nrows=N_ROWS
                      )
     # replace NaN with empty string
     text_cols = ['nombre', 'nombre_spouse', 'nombre_padre',
@@ -288,8 +297,6 @@ def clean_nombres(rf, folder_interim,
         original dataframe, but the name columns have been cleaned up
     """
 
-    
-#    folder_interim = os.path.split(filepath_raw)[0]
     compound_names = get_compound_names(folder_interim)
     print("# of compound_names:", len(compound_names))
 
