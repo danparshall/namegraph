@@ -46,6 +46,7 @@ def main(filepath_raw, folder_interim):
         folder_interim + '/02-surname.tsv', sep='\t', index=False)
 
     nf, funky_prenames = extract.clean_names(rf, surnames_extracted) 
+    del surnames_extracted
 
     print("len(NF):", len(nf))
     print(nf.shape)
@@ -65,12 +66,12 @@ def main(filepath_raw, folder_interim):
     allnames.to_csv(folder_interim + '/04-allnames.tsv', sep='\t', index=False)
     parsed.to_csv(folder_interim + '/05-newfreqfile.tsv', sep='\t', index=False)
     name_counts.to_csv(folder_interim + '/06-namecounts.tsv', sep='\t', index=False)
-
+    del name_counts
 
     ## BEGIN NB 3.0
     print("Padre")
     wts_pre, wts_sur = parents.wts(allnames)
-
+    del allnames
     padre = nf.progress_apply(lambda row: 
                     parents.extract_prename_parent(
                         row, 'nombre_padre', wts_pre, wts_sur, funky_prenames),
@@ -80,32 +81,57 @@ def main(filepath_raw, folder_interim):
                     parents.extract_prename_parent(
                         row, 'nombre_madre', wts_pre, wts_sur, funky_prenames),
                     axis=1, result_type='expand')
+    del funky_prenames
 
     padre.to_csv(folder_interim + '/07-padre.tsv', sep='\t', index = False)
     madre.to_csv(folder_interim + '/08-madre.tsv', sep='\t', index=False)
     
     ## BEGIN 4.0
-    print("Matching exact names")
     ncleaned_rf = match.merge_ncleaned_rf(nf, rf)
+    del nf
+    print("Matching records with cedulas")
+    match_by_cedula_padre = match.match_by_cedula_padre(ncleaned_rf)
+    match_by_cedula_madre = match.match_by_cedula_madre(ncleaned_rf)
+    match_by_cedula_spouse = match.match_by_cedula_spouse(ncleaned_rf)
+    match_by_cedula_padre.to_csv(folder_interim + '/09-match_by_cedula_padres.tsv', 
+                                 sep='\t', index=False)
+    match_by_cedula_madre.to_csv(folder_interim + '/10-match_by_cedula_madres.tsv',
+                                 sep='\t', index=False)
+    match_by_cedula_spouse.to_csv(folder_interim + '/15-match_by_cedula_spouse.tsv', 
+                                 sep='\t', index=False)
+    del match_by_cedula_madre, match_by_cedula_padre, match_by_cedula_spouse
 
-    matched_padres, matched_madres = match.exact_name(ncleaned_rf)
+    ceds_found_padre_cedula = match.ceds_found(
+        ncleaned_rf, 'ced_padre', only_cedula = True)
+    ceds_found_madre_cedula = match.ceds_found(
+        ncleaned_rf, 'ced_madre', only_cedula=True)
+
+    print("Matching exact names")
+    matched_padres = match.exact_name_padre(
+        ncleaned_rf, ceds_found_padre_cedula)
+    matched_madres = match.exact_name_madre(
+        ncleaned_rf, ceds_found_madre_cedula)
     matched_padres.to_csv(
-        folder_interim + '/09-matched_padres.tsv', sep='\t', index=False)
+        folder_interim + '/11-matched_padres.tsv', sep='\t', index=False)
     matched_madres.to_csv(
-        folder_interim + '/10-matched_madres.tsv', sep='\t', index=False)
-
+        folder_interim + '/12-matched_madres.tsv', sep='\t', index=False)
+    del ncleaned_rf, ceds_found_padre_cedula, ceds_found_madre_cedula
     ## BEGIN 5.0
     print("Matching partial")
     names = match.create_names(parsed, rf)
+    del parsed, rf
     # Guys that has ced_padre or ced_madre
-    ceds_found_madre = match.ceds_found(names, matched_madres, 'ced_madre')
-    ceds_found_padre = match.ceds_found(names, matched_padres, 'ced_padre')
-
+    ceds_found_madre = match.ceds_found(
+        names, 'ced_madre', matched_madres)
+    ceds_found_padre = match.ceds_found(
+        names, 'ced_padre', matched_padres)
+    del matched_madres, matched_padres
     mparsed = match.parsed(madre, ceds_found_madre)
     pparsed = match.parsed(padre, ceds_found_padre)
+    del padre, madre
 
-    file_out_madre = folder_interim + '/11-MADRES_matched_by_name.tsv'
-    file_out_padre = folder_interim + '/12-PADRES_matched_by_name.tsv'
+    file_out_madre = folder_interim + '/13-MADRES_matched_by_name.tsv'
+    file_out_padre = folder_interim + '/14-PADRES_matched_by_name.tsv'
     match.matched_by_name(mparsed, names, 'F', file_out_madre)
     match.matched_by_name(pparsed, names, 'M', file_out_padre)
     
