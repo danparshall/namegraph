@@ -5,8 +5,8 @@ import pandas as pd
 import numpy as np
 
 # Paths
-dir_name = ''
-base_filename = ''  # EdgeList File
+dir_name = '/home/juan.russy/shared/proof_run_FamNet/'
+base_filename = 'interim/PROOF_GRAPH_matched_exact_name.txt'  # EdgeList File
 filename = dir_name + base_filename
 print(filename)
 

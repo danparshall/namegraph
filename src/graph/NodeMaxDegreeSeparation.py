@@ -1,22 +1,26 @@
 import time
-from re import L
 import networkit as nk
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
+import itertools
 
 NROWS = None
 
 # Paths
-dir_name = ''
+dir_name = '/home/juan.russy/shared/proof_run_FamNet/output/'
 base_filename = 'Matched_Graph.txt'
 gml_filename = 'example.gml'
-filepath_raw = '../RegCleaned.tsv'
-
+mapDf_filename = 'Matched_Graph_Map.tsv'
+filepath_raw = '/home/juan.russy/shared/FamilyNetwork/RegCleaned.tsv'
+merged_filename = 'merged_consanguinity.tsv'
 # Read EdgeList
 print('Read EdgeList')
+start_time = time.time()
 reader = nk.graphio.EdgeListReader(  # 'graphio' object
     separator='\t', firstNode=0, continuous=False, directed=False)
 G = reader.read(dir_name + base_filename)  # 'graph' object
+print("EdgeList %s seconds ---" % round(time.time() - start_time, 2))
 
 # Functions
 def load_registry(filepath_raw, NROWS=None):
@@ -111,7 +115,7 @@ def EdgeSeparation(G, node, MaxDegree):
     return info_nodes_df
 
 
-def ConsanguinitySeparation(graph, node, MaxDegree):
+def ConsanguinitySeparation(graph, NODE, MaxDegree):
     """ Obtain all nodes from a certain consanguinity degree of separation
 
     Consanguinity follows specific rules: between the couple and the person 
@@ -123,7 +127,7 @@ def ConsanguinitySeparation(graph, node, MaxDegree):
 
     Args:
         graph: Weighted networkit's graph
-        node: Integer with node ID
+        NODE: Integer with node ID
         MaxDegree: Maximum consanguinity degree of separation from node allowed
     Returns:
         info_nodes_df: Dataframe with the name, consanguinity degree of separation 
@@ -137,10 +141,10 @@ def ConsanguinitySeparation(graph, node, MaxDegree):
     queue_name, queue_degree, queue_path = ([] for _ in range(3))
 
     # Initial node
-    queue_name.append(node)
+    queue_name.append(NODE)
     queue_degree.append(degree_separation)
     queue_path.append(path)
-    visited.add(node)
+    visited.add(NODE)
 
     # List with all the nodes information (they are not deleted)
     all_names, all_degrees, all_paths = ([] for _ in range(3))
@@ -180,7 +184,7 @@ def ConsanguinitySeparation(graph, node, MaxDegree):
     # Generate dataframe from the ALL lists
     info_nodes_df = pd.DataFrame(
         {'node_name': all_names, 'degree_separation': all_degrees, 'path': all_paths})
-
+    info_nodes_df['reference'] = NODE
     return info_nodes_df
 
 
@@ -204,28 +208,61 @@ def Map_IDnk_cedula(reader):
     return map_df
 
 
-def ConsanguinitySeparationMap(reader, graph, cedula, MaxDegree, filepath_raw = '/home/juan.russy/shared/FamilyNetwork/RegCleaned.tsv'):
+def find_cedula_in_dict(dct, cedula):
+    if cedula in dct.keys():
+        return dct[cedula]
+    else:
+        return None
+
+
+def ConsanguinitySeparationMap(reader, graph, cedula, MaxDegree, filepath_raw = filepath_raw):
+    start_time = time.time()
     # Generate map
+    map_dct = reader.getNodeMap()
     map_df = Map_IDnk_cedula(reader)
-    # Filter cedula of interest
-    node = map_df.loc[map_df.cedula == cedula, 'node_name'].tolist()
-   # Found nodes base on MaxDegree consanguinity separation
-    consanguinity = ConsanguinitySeparation(graph, node[0], MaxDegree)
+    print("Map %s seconds ---" % round(time.time() - start_time, 2))
+
+    start_time = time.time()
+    consanguinity = {}
+    for ced in tqdm(cedula):
+        # Filter cedula of interest
+        node = find_cedula_in_dict(map_dct, ced)
+        # print('node', node)
+        if node == None:
+            continue
+        # Found nodes base on MaxDegree consanguinity separation
+        consanguinity_temp = ConsanguinitySeparation(graph, node, MaxDegree)
+        consanguinity[ced] = consanguinity_temp
+    consanguinity = pd.concat(consanguinity, ignore_index=True)
+    print("Loop consanguinity %s seconds ---" % round(time.time() - start_time, 2))
+
     # Load cedula and names columns of original dataset
+    start_time = time.time()
     rf = load_registry(filepath_raw, NROWS)
-    # Merge with the map to obtain cedula information
-    output = consanguinity.merge(map_df, how = 'left')
-    # Merge with the dataset to obtain name information
-    output = output.merge(rf, how = 'left')
-    return output
+    print("Load registry %s seconds ---" % round(time.time() - start_time, 2))
+    
+    # Merge with the map to obtain cedula number
+    start_time = time.time()
+    output = consanguinity.merge(map_df, how='left')
+    map_df.columns = ['cedula_reference', 'reference']
+    output = output.merge(map_df, how='left', on = 'reference')
+    output.drop(['node_name', 'reference'], axis = 1)
+    print("Merge Map %s seconds ---" % round(time.time() - start_time, 2))
+
+    # Merge with rf to obtain name
+    start_time = time.time()
+    output = output.merge(rf, how='left')
+    print("Merge rf %s seconds ---" % round(time.time() - start_time, 2))
+    output.to_csv(dir_name + merged_filename, sep='\t', index = False)
 
 
 print('Consanguinity')
-# start_time = time.time()
-# print(ConsanguinitySeparationMap(reader, G, '000001a435117d61', 8))
-# print("--- %s seconds ---" % round(time.time() - start_time, 2))
+filepath_firms = '/home/juan.russy/shared/FamilyNetwork/sample_firm_size4.tsv'
+df_firms = pd.read_csv(filepath_firms, sep='\t', encoding='utf-8', 
+                       usecols=['employerIDh'], keep_default_na=False, nrows=NROWS)
+ConsanguinitySeparationMap(reader, G, df_firms['employerIDh'].tolist(), 7)  # '000001a435117d61'
 
-start_time = time.time()
-consanguinity = ConsanguinitySeparation(G, 9653085, 8)
-print("--- %s seconds ---" % round(time.time() - start_time, 2))
+# start_time = time.time()
+# consanguinity = ConsanguinitySeparation(G, 9653085, 8)
+# print("--- %s seconds ---" % round(time.time() - start_time, 2))
 # print(EdgeSeparation(G, 2, 9))

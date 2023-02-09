@@ -1,11 +1,16 @@
 import matplotlib.pyplot as plt
 import networkit as nk
 dir_name = '/home/juan.russy/shared/proof_run_FamNet/'
-base_filename = 'interim/example.gml'
+# base_filename = 'output/example.gml'
+base_filename = 'output/Matched_Graph.txt'
 output_filename = 'plots/component_size'
 
-G = nk.readGraph(dir_name + base_filename, nk.graphio.Format.GML)
+reader = nk.graphio.EdgeListReader(
+    separator='\t', firstNode=0, continuous=False, directed=False)
+G = reader.read(dir_name + base_filename)  # 'graph' object
+# G = nk.readGraph(dir_name + base_filename, nk.graphio.Format.GML)
 print('number of nodes', G.numberOfNodes(), 'number of edges', G.numberOfEdges())
+print('is weighted', G.isWeighted())
 
 cc = nk.components.ConnectedComponents(G)
 

@@ -7,10 +7,10 @@ sys.path.append("../data")
 import utils
 
 # Paths
-dir_name = '../shared/proof_run_FamNet/'
-raw_path = '..data/shared/FamilyNetwork/'
-filepath_raw = 'original/RC_v2021.tsv'
-base_filename = 'interim/PROOF_GRAPH_matched_exact_name.txt'
+dir_name = '/home/juan.russy/shared/proof_run_FamNet/'
+raw_path = '/home/juan.russy/shared/FamilyNetwork/'
+filepath_raw = 'RegCleaned.tsv'
+base_filename = 'output/Matched_Graph.txt'
 filename = dir_name + base_filename
 print(filename)
 
