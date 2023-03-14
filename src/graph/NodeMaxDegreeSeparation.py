@@ -53,7 +53,7 @@ def path_arrange(path):
         return path[: path.rfind('-')] + '-S'
 
 
-def EdgeSeparation(G, node, MaxDegree):
+def EdgeSeparation(G, NODE, MaxDegree):
     """ Nodes with less than MaxDegree of separation from node 
     
     BFS is used to do the search, the function manages three queue's with the
@@ -61,7 +61,7 @@ def EdgeSeparation(G, node, MaxDegree):
 
     Args:
         G: Weighted or Unweighted networkit's graph
-        node: Integer with node ID
+        NODE: Integer with node ID
         MaxDegree: Maximum degree of separation from node allowed
     Returns:
         info_nodes_df: Dataframe with the name, degree of separation and paths
@@ -75,10 +75,10 @@ def EdgeSeparation(G, node, MaxDegree):
     queue_name, queue_degree, queue_path = ([] for _ in range(3))
 
     # Initial node
-    queue_name.append(node)
+    queue_name.append(NODE)
     queue_degree.append(degree_separation)
     queue_path.append(path)
-    visited.add(node)
+    visited.add(NODE)
 
     # List with all the nodes information (they are not deleted)
     all_names, all_degrees, all_paths = ([] for _ in range(3))
@@ -111,7 +111,7 @@ def EdgeSeparation(G, node, MaxDegree):
     # Generate dataframe from the ALL lists
     info_nodes_df = pd.DataFrame(
         {'node_name': all_names, 'degree_separation': all_degrees, 'path': all_paths})
-
+    info_nodes_df['reference'] = NODE
     return info_nodes_df
 
 
@@ -231,7 +231,7 @@ def ConsanguinitySeparationMap(reader, graph, cedula, MaxDegree, filepath_raw = 
         if node == None:
             continue
         # Found nodes base on MaxDegree consanguinity separation
-        consanguinity_temp = ConsanguinitySeparation(graph, node, MaxDegree)
+        consanguinity_temp = EdgeSeparation(graph, node, MaxDegree)
         consanguinity[ced] = consanguinity_temp
     consanguinity = pd.concat(consanguinity, ignore_index=True)
     print("Loop consanguinity %s seconds ---" % round(time.time() - start_time, 2))
@@ -259,8 +259,8 @@ def ConsanguinitySeparationMap(reader, graph, cedula, MaxDegree, filepath_raw = 
 print('Consanguinity')
 filepath_firms = '/home/juan.russy/shared/FamilyNetwork/sample_firm_size4.tsv'
 df_firms = pd.read_csv(filepath_firms, sep='\t', encoding='utf-8', 
-                       usecols=['employerIDh'], keep_default_na=False, nrows=NROWS)
-ConsanguinitySeparationMap(reader, G, df_firms['employerIDh'].tolist(), 7)  # '000001a435117d61'
+                        usecols=['employerIDh'], keep_default_na=False, nrows=NROWS)
+ConsanguinitySeparationMap(reader, G, df_firms['employerIDh'].tolist(), 7)
 
 # start_time = time.time()
 # consanguinity = ConsanguinitySeparation(G, 9653085, 8)
